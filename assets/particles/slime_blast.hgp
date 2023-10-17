@@ -1,0 +1,16 @@
+[ParticleEmitter]
+startColor=0.227500,0.875000,0.065625,1.000000
+scale=1.000000,6.800000
+speed=100.000000,1500.000000
+angle=0.000000,360.000000
+gravity=0.000000,0.000000,0.000000
+singleShotParticles=500
+singleShotDuration=1.000000
+singleShot=1
+endColor=0.687500,1.000000,0.000000,1.000000
+aliveFor=0.100000,0.270000
+positionRelative=0
+particlesPerSecond=1
+
+[Shape]
+

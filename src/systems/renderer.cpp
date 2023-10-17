@@ -1,0 +1,210 @@
+//
+// Created by henry on 8/23/23.
+//
+#include "renderer.h"
+#include "../components/actor.h"
+#include "player.h"
+#include "enemies.h"
+#include <iostream>
+#include <hagame/math/components/rectCollider.h>
+#include <hagame/math/components/circleCollider.h>
+
+using namespace hg;
+using namespace hg::graphics;
+using namespace hg::utils;
+using namespace hg::math::collisions;
+using namespace hg::math::components;
+
+Renderer::Renderer(Window* window, GameState* state):
+        m_state(state),
+        m_quad(Vec2(2, 2), Vec2(0, 0), true),
+        m_mesh(&m_quad),
+        m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
+        m_window(window),
+        m_laserDisc(3, 10)
+{
+    m_laserMesh = std::make_unique<MeshInstance>(&m_laser);
+    m_laserDiscMesh = std::make_unique<MeshInstance>(&m_laserDisc);
+}
+
+void Renderer::onInit() {
+    m_camera.zoom = m_state->zoom;
+    m_camera.size = GAME_SIZE;
+    m_camera.centered = true;
+    m_renderPasses.create(RenderMode::Color, GAME_SIZE);
+
+    auto colorShader = getShader("color");
+    auto textShader = getShader("text");
+    auto font = getFont("8bit");
+
+    Debug::Initialize(colorShader, textShader, font);
+
+    m_wave = TextBuffer(font, "Wave 0", Vec3(m_window->size().x() / 2, m_window->size().y() - 50, 0), TextHAlignment::Center);
+    m_enemies = TextBuffer(font, "0 Enemies Remaining", Vec3(m_window->size().x() / 2, m_window->size().y() - 75, 0), TextHAlignment::Center);
+    m_weapon = TextBuffer(font, "Shotgun", Vec3(m_window->size().x() - 200, 50), Vec3(200, 200, 0), TextHAlignment::Right);
+    m_ammo = TextBuffer(font, "10 / 12", Vec3(m_window->size().x() - 200, 75), Vec3(200, 200, 0),TextHAlignment::Right);
+}
+
+void Renderer::onBeforeUpdate() {
+
+    m_camera.zoom = m_state->zoom;
+
+    m_window->color(m_state->tilemap->background);
+    m_renderPasses.bind(RenderMode::Color);
+    m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+
+    Debug::ENABLED = m_state->params.debugRender;
+
+    auto shader = getShader("text");
+    shader->use();
+
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("view", Mat4::Identity());
+
+    shader = getShader("color");
+    shader->use();
+
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+}
+
+void Renderer::onUpdate(double dt) {
+
+}
+
+void Renderer::setCameraPosition(Vec3 pos) {
+    m_camera.transform.position = pos;
+}
+
+hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
+    return m_camera.getGamePos(rawMousePos);
+}
+
+void Renderer::onAfterUpdate() {
+    Debug::Render();
+
+    Profiler::Start();
+
+    m_window->setVSync(m_state->params.vsync);
+
+    auto player = scene->getSystem<Player>();
+    auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
+    if (m_weapon.text() != weapon->settings.name) {
+        m_weapon.text(weapon->settings.name);
+    }
+
+    std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
+    if (m_ammo.text() != ammoText) {
+        m_ammo.text(ammoText);
+    }
+
+    std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
+    if (enemyText != m_enemies.text()) {
+        m_enemies.text(enemyText);
+    }
+
+    std::string waveText = "Wave " + std::to_string(m_state->wave);
+    if (m_wave.text() != waveText) {
+        m_wave.text(waveText);
+    }
+
+
+    auto shader = getShader("sprite");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
+        shader->setMat4("model", entity->model());
+        getTexture(sprite->texture)->bind();
+        sprite->mesh()->render();
+    });
+
+    scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
+        Rect rect(entity->transform.position.resize<2>() - actor->size * 0.5, actor->size);
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + actor->direction.resize<3>() * 100), Color::blue());
+    });
+
+    scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
+        Debug::DrawRect(Rect(coll->rect.pos + entity->position().resize<2>(), coll->rect.size), Color::blue());
+    });
+
+    scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
+        Vec2 pos = coll->circle.center + entity->transform.position.resize<2>();
+        Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
+    });
+
+    shader = getShader("color");
+    shader->use();
+
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    m_state->tilemap->render(TileMode::Color, shader);
+
+    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
+        health->render(getShader("color"));
+    });
+
+    shader->setMat4("model", Mat4::Identity());
+    shader->setVec4("color", Color::red());
+    m_laserMesh->render();
+    m_laserDiscMesh->render();
+
+    shader = getShader("particle");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+    shader->setMat4("model", Mat4::Identity());
+
+    scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
+        emitter->render(getShader("particle"));
+    });
+
+    shader = getShader("text_buffer");
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+    shader->setVec4("textColor", Color::white());
+
+    m_wave.render();
+    m_weapon.render();
+    m_ammo.render();
+    m_enemies.render();
+
+    m_renderPasses.render(RenderMode::Color, 1);
+
+    shader = getShader("display");
+    shader->use();
+
+    m_renderPasses.get(RenderMode::Color)->texture->bind();
+    m_mesh.render();
+
+    Profiler::End();
+}
+
+void Renderer::onFixedUpdate(double dt) {
+    Profiler::Start();
+    scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
+        if (emitter->emitter()->finished()) {
+            scene->entities.remove(entity);
+            return;
+        }
+
+        emitter->update(dt);
+    });
+    Profiler::End();
+}
+
+void Renderer::setLaserPointer(hg::Vec3 start, hg::Vec3 end) {
+    m_laser.clearPoints();
+    m_laser.addPoint(start);
+    m_laser.addPoint(end);
+    m_laserMesh->update(&m_laser);
+
+    m_laserDisc.offset(end);
+    m_laserDiscMesh->update(&m_laserDisc);
+}
+

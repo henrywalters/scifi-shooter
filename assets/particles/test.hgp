@@ -1,0 +1,11 @@
+[ParticleEmitter]
+gravity=0.000000,0.000000,0.000000
+startColor=1.000000,0.919933,0.538922,1.000000
+speed=10.000000,45.000000
+angle=0.000000,360.000000
+endColor=1.000000,1.000000,1.000000,0.000000
+aliveFor=0.100000,0.690000
+positionRelative=1
+particlesPerSecond=60
+
+[Shape]
