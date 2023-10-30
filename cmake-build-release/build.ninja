@@ -249,6 +249,27 @@ build CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveOnPath.cpp.o: CXX_CO
   OBJECT_DIR = CMakeFiles/ScifiShooter.dir
   OBJECT_FILE_DIR = CMakeFiles/ScifiShooter.dir/src/enemies/behaviors
 
+build CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/targetLocation.cpp.o: CXX_COMPILER__ScifiShooter_Release /home/henry/development/games/scifi-shooter/src/enemies/behaviors/targetLocation.cpp || cmake_object_order_depends_target_ScifiShooter
+  DEP_FILE = CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/targetLocation.cpp.o.d
+  FLAGS = -O3 -DNDEBUG -fcolor-diagnostics -std=gnu++20
+  INCLUDES = -I/home/henry/development/games/HaGameLite/thirdparty/entt/src -I/home/henry/development/games/HaGameLite/thirdparty/box2d/include -I/home/henry/development/games/HaGameLite/include -I/home/henry/development/games/HaGameLite/thirdparty/asio/asio/include -I/home/henry/development/games/scifi-shooter/thirdparty/imgui
+  OBJECT_DIR = CMakeFiles/ScifiShooter.dir
+  OBJECT_FILE_DIR = CMakeFiles/ScifiShooter.dir/src/enemies/behaviors
+
+build CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/correctPath.cpp.o: CXX_COMPILER__ScifiShooter_Release /home/henry/development/games/scifi-shooter/src/enemies/behaviors/correctPath.cpp || cmake_object_order_depends_target_ScifiShooter
+  DEP_FILE = CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/correctPath.cpp.o.d
+  FLAGS = -O3 -DNDEBUG -fcolor-diagnostics -std=gnu++20
+  INCLUDES = -I/home/henry/development/games/HaGameLite/thirdparty/entt/src -I/home/henry/development/games/HaGameLite/thirdparty/box2d/include -I/home/henry/development/games/HaGameLite/include -I/home/henry/development/games/HaGameLite/thirdparty/asio/asio/include -I/home/henry/development/games/scifi-shooter/thirdparty/imgui
+  OBJECT_DIR = CMakeFiles/ScifiShooter.dir
+  OBJECT_FILE_DIR = CMakeFiles/ScifiShooter.dir/src/enemies/behaviors
+
+build CMakeFiles/ScifiShooter.dir/src/console.cpp.o: CXX_COMPILER__ScifiShooter_Release /home/henry/development/games/scifi-shooter/src/console.cpp || cmake_object_order_depends_target_ScifiShooter
+  DEP_FILE = CMakeFiles/ScifiShooter.dir/src/console.cpp.o.d
+  FLAGS = -O3 -DNDEBUG -fcolor-diagnostics -std=gnu++20
+  INCLUDES = -I/home/henry/development/games/HaGameLite/thirdparty/entt/src -I/home/henry/development/games/HaGameLite/thirdparty/box2d/include -I/home/henry/development/games/HaGameLite/include -I/home/henry/development/games/HaGameLite/thirdparty/asio/asio/include -I/home/henry/development/games/scifi-shooter/thirdparty/imgui
+  OBJECT_DIR = CMakeFiles/ScifiShooter.dir
+  OBJECT_FILE_DIR = CMakeFiles/ScifiShooter.dir/src
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target ScifiShooter
@@ -257,7 +278,7 @@ build CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveOnPath.cpp.o: CXX_CO
 #############################################
 # Link the executable ScifiShooter
 
-build ScifiShooter: CXX_EXECUTABLE_LINKER__ScifiShooter_Release CMakeFiles/ScifiShooter.dir/main.cpp.o CMakeFiles/ScifiShooter.dir/src/game.cpp.o CMakeFiles/ScifiShooter.dir/src/runtime.cpp.o CMakeFiles/ScifiShooter.dir/src/weapons.cpp.o CMakeFiles/ScifiShooter.dir/src/components/ai.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/renderer.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/player.cpp.o CMakeFiles/ScifiShooter.dir/src/utils.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/enemies.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/actors.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/weapons.cpp.o CMakeFiles/ScifiShooter.dir/src/gamestate.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/canSee.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveTo.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/findPath.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/enemy.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/randomLocation.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveOnPath.cpp.o | /home/henry/development/games/HaGameLite/lib/libHaGame2.a /usr/lib/x86_64-linux-gnu/libOpenGL.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libGLU.so libimgui.a /usr/lib/x86_64-linux-gnu/libX11.so /usr/lib/x86_64-linux-gnu/libXext.so /usr/lib/x86_64-linux-gnu/libasound.so || libimgui.a
+build ScifiShooter: CXX_EXECUTABLE_LINKER__ScifiShooter_Release CMakeFiles/ScifiShooter.dir/main.cpp.o CMakeFiles/ScifiShooter.dir/src/game.cpp.o CMakeFiles/ScifiShooter.dir/src/runtime.cpp.o CMakeFiles/ScifiShooter.dir/src/weapons.cpp.o CMakeFiles/ScifiShooter.dir/src/components/ai.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/renderer.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/player.cpp.o CMakeFiles/ScifiShooter.dir/src/utils.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/enemies.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/actors.cpp.o CMakeFiles/ScifiShooter.dir/src/systems/weapons.cpp.o CMakeFiles/ScifiShooter.dir/src/gamestate.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/canSee.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveTo.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/findPath.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/enemy.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/randomLocation.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/moveOnPath.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/targetLocation.cpp.o CMakeFiles/ScifiShooter.dir/src/enemies/behaviors/correctPath.cpp.o CMakeFiles/ScifiShooter.dir/src/console.cpp.o | /home/henry/development/games/HaGameLite/lib/libHaGame2.a /usr/lib/x86_64-linux-gnu/libOpenGL.so /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libGLU.so libimgui.a /usr/lib/x86_64-linux-gnu/libX11.so /usr/lib/x86_64-linux-gnu/libXext.so /usr/lib/x86_64-linux-gnu/libasound.so || libimgui.a
   FLAGS = -O3 -DNDEBUG
   LINK_LIBRARIES = /home/henry/development/games/HaGameLite/lib/libHaGame2.a  -lglfw3  /usr/lib/x86_64-linux-gnu/libOpenGL.so  /usr/lib/x86_64-linux-gnu/libGLX.so  /usr/lib/x86_64-linux-gnu/libGLU.so  libimgui.a  /usr/lib/x86_64-linux-gnu/libX11.so  /usr/lib/x86_64-linux-gnu/libXext.so  /usr/lib/x86_64-linux-gnu/libasound.so  -lglfw
   OBJECT_DIR = CMakeFiles/ScifiShooter.dir

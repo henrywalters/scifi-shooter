@@ -18,6 +18,11 @@ Weapons::Weapons(GameState* state):
 {}
 
 void Weapons::onFixedUpdate(double dt) {
+
+    if (m_state->paused) {
+        return;
+    }
+
     scene->entities.forEach<Projectile>([&](Projectile* projectile, hg::Entity* entity) {
 
         auto vel = projectile->direction * projectile->speed;
@@ -71,9 +76,7 @@ void Weapons::onFixedUpdate(double dt) {
 
             // hitNeighborEntity->getComponent<TopDownPlayerController>()->addVelocity(projectile->direction * 2000);
 
-            if (!hitActor->alive()) {
-                hitActor->die(scene);
-            } else {
+            if (hitActor->alive()) {
                 if (entity->hasComponent<Explosive>()) {
                     entity->getComponent<Explosive>()->explode(scene, m_state);
                 }

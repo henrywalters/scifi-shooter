@@ -93,10 +93,6 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
 
             // hitNeighborEntity->getComponent<TopDownPlayerController>()->addVelocity(projectile->direction * 2000);
 
-            if (!hitActor->alive()) {
-                hitActor->die(runtime);
-            }
-
             auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get("blood_hit"));
             emitter->emitter()->fire();
             continue;

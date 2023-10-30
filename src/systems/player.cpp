@@ -29,8 +29,8 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 void Player::onInit() {
 
     player = AddActor(scene, Vec3::Zero(), "player", Vec2(64, 64), 500);
-   //uto rect = player->addComponent<hg::math::components::RectCollider>();
-    //rect->rect = Rect(Vec2(-32, -32), Vec2(64, 64));
+    auto rect = player->addComponent<hg::math::components::RectCollider>();
+    rect->rect = Rect(Vec2(-32, -32), Vec2(64, 64));
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
 
@@ -107,6 +107,14 @@ void Player::onInit() {
 
 void Player::onUpdate(double dt) {
 
+    if (m_state->paused) {
+        return;
+    }
+
+    Renderer* renderer = scene->getSystem<Renderer>();
+
+    renderer->setCrossHair(m_mousePos, 10, 15);
+
     auto actor = player->getComponent<Actor>();
 
     for (int i = 0; i < actor->weapons.getCount(); i++) {
@@ -135,23 +143,18 @@ void Player::ui() {
 }
 
 void Player::onFixedUpdate(double dt) {
-    Renderer* renderer = scene->getSystem<Renderer>();
 
-    float t = 1.0;
-    math::Ray laserRay(player->position(), (m_mousePos.resize<3>() - player->position()) * 10000);
-    auto laserHit = m_state->tilemap->raycast(0, laserRay, t);
-
-    float tmpT;
-
-    auto entityHit = m_state->entityMap.raycast(laserRay, tmpT);
-
-    if (entityHit.has_value()) {
-        t = tmpT;
+    if (m_state->paused) {
+        return;
     }
 
-    Vec3 endpoint = laserHit.has_value() ? laserRay.getPointOnLine(t) : laserRay.getPointOnLine(1.0);
+    Renderer* renderer = scene->getSystem<Renderer>();
 
-    renderer->setLaserPointer(player->position(), endpoint);
+    Vec2 laserHit;
+    math::Ray laserRay(player->position(), (m_mousePos.resize<3>() - player->position()));
+    m_state->raycast(laserRay, laserHit, {player});
+
+    renderer->setLaserPointer(player->position(), laserHit.resize<3>());
 
     auto rawMousePos = m_window->input.keyboardMouse.mouse.position;
     rawMousePos[1] = m_window->size()[1] - rawMousePos[1];

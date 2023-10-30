@@ -10,6 +10,12 @@
 #include <hagame/utils/behaviorTree.h>
 
 #include "behaviors/findPath.h"
+#include "behaviors/randomLocation.h"
+#include "behaviors/moveOnPath.h"
+#include "behaviors/canSee.h"
+#include "behaviors/targetLocation.h"
+#include "behaviors/correctPath.h"
+
 
 enum class EnemyType {
     Slime,
@@ -27,12 +33,31 @@ const EnemyDef Slime = EnemyDef{
         EnemyType::Slime,
         "slime",
         hg::Vec2(32, 32),
-        100,
+        500,
         std::make_shared<hg::utils::BehaviorTree<EnemyState>>()
 };
 
 const hg::utils::Store<EnemyType, EnemyDef> ENEMIES({
     std::make_tuple(EnemyType::Slime, Slime),
 });
+
+template <typename State>
+void CreateBehavior(EnemyType type, hg::utils::BehaviorTree<State>* bt) {
+    if (type == EnemyType::Slime) {
+        auto sel = bt->template setRoot<hg::utils::bt::Selector<EnemyState>>();
+        auto attackSeq = bt->template addChild<hg::utils::bt::Sequence<EnemyState>>(sel);
+        auto patrolSeq = bt->template addChild<hg::utils::bt::Sequence<EnemyState>>(sel);
+        bt->template addChild<RandomLocation>(patrolSeq);
+        bt->template addChild<FindPath>(patrolSeq);
+        bt->template addChild<MoveOnPath>(patrolSeq);
+
+        bt->template addChild<TargetLocation>(attackSeq);
+        bt->template addChild<FindPath>(attackSeq);
+        bt->template addChild<MoveOnPath>(attackSeq);
+
+        bt->template addService<CanSee>(std::vector<std::string>({"player"}))->ticksPerSecond = 4.0;
+        bt->template addService<CorrectPath>()->ticksPerSecond = 16.0;
+    }
+}
 
 #endif //SCIFISHOOTER_ENEMY_H

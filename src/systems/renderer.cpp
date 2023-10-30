@@ -8,6 +8,7 @@
 #include <iostream>
 #include <hagame/math/components/rectCollider.h>
 #include <hagame/math/components/circleCollider.h>
+#include "../runtime.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -25,6 +26,12 @@ Renderer::Renderer(Window* window, GameState* state):
 {
     m_laserMesh = std::make_unique<MeshInstance>(&m_laser);
     m_laserDiscMesh = std::make_unique<MeshInstance>(&m_laserDisc);
+
+    for (int i = 0; i < 4; i++) {
+        m_crossHairQuads[i] = primitives::Quad();
+        m_crossHairQuads[i].centered(true);
+        m_crossHairMeshes[i] = std::make_unique<MeshInstance>(&m_crossHairQuads[i]);
+    }
 }
 
 void Renderer::onInit() {
@@ -32,6 +39,8 @@ void Renderer::onInit() {
     m_camera.size = GAME_SIZE;
     m_camera.centered = true;
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
+
+    // m_window->setMouseVisible(false);
 
     auto colorShader = getShader("color");
     auto textShader = getShader("text");
@@ -46,6 +55,8 @@ void Renderer::onInit() {
 }
 
 void Renderer::onBeforeUpdate() {
+
+    // m_window->setMouseVisible(m_state->paused);
 
     m_camera.zoom = m_state->zoom;
 
@@ -70,23 +81,11 @@ void Renderer::onBeforeUpdate() {
 }
 
 void Renderer::onUpdate(double dt) {
-
-}
-
-void Renderer::setCameraPosition(Vec3 pos) {
-    m_camera.transform.position = pos;
-}
-
-hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
-    return m_camera.getGamePos(rawMousePos);
-}
-
-void Renderer::onAfterUpdate() {
-    Debug::Render();
-
     Profiler::Start();
 
     m_window->setVSync(m_state->params.vsync);
+
+    Runtime* runtime = (Runtime*) scene;
 
     auto player = scene->getSystem<Player>();
     auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
@@ -122,8 +121,12 @@ void Renderer::onAfterUpdate() {
     });
 
     scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
-        Rect rect(entity->transform.position.resize<2>() - actor->size * 0.5, actor->size);
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + actor->direction.resize<3>() * 100), Color::blue());
+        Vec3 dir = actor->direction.resize<3>().normalized();
+        Vec3 a = math::Quaternion<float>(actor->fov * -0.5, Vec3::Face()).rotatePoint(dir);
+        Vec3 b = math::Quaternion<float>(actor->fov * 0.5, Vec3::Face()).rotatePoint(dir);
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + dir * 100), Color::blue());
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + a * 100), Color::blue());
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + b * 100), Color::blue());
     });
 
     scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
@@ -131,7 +134,7 @@ void Renderer::onAfterUpdate() {
     });
 
     scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
-        Vec2 pos = coll->circle.center + entity->transform.position.resize<2>();
+        Vec2 pos = entity->transform.position.resize<2>();
         Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
     });
 
@@ -151,6 +154,10 @@ void Renderer::onAfterUpdate() {
     shader->setVec4("color", Color::red());
     m_laserMesh->render();
     m_laserDiscMesh->render();
+
+    for (int i = 0; i < 4; i++) {
+        m_crossHairMeshes[i]->render();
+    }
 
     shader = getShader("particle");
     shader->use();
@@ -174,6 +181,14 @@ void Renderer::onAfterUpdate() {
     m_ammo.render();
     m_enemies.render();
 
+    shader = getShader("color");
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+
+    runtime->console()->render();
+
     m_renderPasses.render(RenderMode::Color, 1);
 
     shader = getShader("display");
@@ -183,6 +198,18 @@ void Renderer::onAfterUpdate() {
     m_mesh.render();
 
     Profiler::End();
+}
+
+void Renderer::setCameraPosition(Vec3 pos) {
+    m_camera.transform.position = pos;
+}
+
+hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
+    return m_camera.getGamePos(rawMousePos);
+}
+
+void Renderer::onAfterUpdate() {
+    Debug::Render();
 }
 
 void Renderer::onFixedUpdate(double dt) {
@@ -206,5 +233,28 @@ void Renderer::setLaserPointer(hg::Vec3 start, hg::Vec3 end) {
 
     m_laserDisc.offset(end);
     m_laserDiscMesh->update(&m_laserDisc);
+}
+
+void Renderer::setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius) {
+
+    float height = outerRadius - innerRadius;
+    float mid = innerRadius + height * 0.5;
+
+    for (int i = 0; i < 4; i++) {
+
+        Vec2 size = i % 2 == 0 ?
+            Vec2(CROSSHAIR_WIDTH, height) :
+            Vec2(height, CROSSHAIR_WIDTH);
+
+        Vec2 offset = i % 2 == 0 ?
+            Vec2(0, mid * (-1 * (i != 0) + (i == 0))) :
+            Vec2(mid * (-1 * (i != 1) + (i == 1)), 0);
+
+        m_crossHairQuads[i].setSizeAndOffset(size, pos + offset);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        m_crossHairMeshes[i]->update(&m_crossHairQuads[i]);
+    }
 }
 

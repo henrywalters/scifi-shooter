@@ -2,6 +2,7 @@
 // Created by henry on 10/10/23.
 //
 #include "moveOnPath.h"
+#include "tags.h"
 #include "../../components/actor.h"
 
 #include <hagame/graphics/debug.h>
@@ -14,7 +15,12 @@ using namespace hg::graphics;
 void MoveOnPath::init(EnemyState *state, data_context_t *ctx) {
     m_index = 0;
     m_path.clear();
-    auto path = GetData<std::vector<Vec2i>>(ctx, "path");
+
+    if (!HasData(ctx, (uuid_t)BTags::Path)) {
+        return;
+    }
+
+    auto path = GetData<std::vector<Vec2i>>(ctx, (uuid_t)BTags::Path);
     for (int i = 1; i < path.size(); i++) {
 
         auto pos = state->game->tilemap->getPos(path[i]);
@@ -52,12 +58,9 @@ Status MoveOnPath::process(double dt, EnemyState *state, data_context_t *ctx) {
         auto ray = math::Ray(state->entity->transform.position, pathPos.resize<3>() - state->entity->transform.position);
         float t;
         auto hit = state->game->tilemap->raycast(0, ray, t);
-        Debug::DrawRay(ray, Color::red(), 5, 1,  1.0 / 60.0f);
         if (!hit.has_value()) {
             m_target = pathPos;
             m_hasTarget = true;
-        } else {
-            Debug::DrawCircle(hit.value().position.x(), hit.value().position.y(), 10, Color::red(),1,  1.0 / 60.0f);
         }
     }
 

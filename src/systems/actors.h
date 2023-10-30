@@ -19,7 +19,9 @@ public:
 
     Actors(GameState* state);
 
-    void onUpdate(double dt) override;
+    void onBeforeUpdate() override;
+    void onFixedUpdate(double dt) override;
+    void onAfterUpdate() override;
 
 private:
 

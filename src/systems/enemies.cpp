@@ -3,7 +3,7 @@
 //
 
 #include "imgui.h"
-
+#include <variant>
 #include "enemies.h"
 
 #include "../utils.h"
@@ -11,6 +11,7 @@
 #include "player.h"
 #include "../constants.h"
 #include "../components/actor.h"
+#include "../enemies/behaviors/tags.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -41,6 +42,7 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
     EnemyDef def = ENEMIES.get(type);
 
     hg::Entity* entity = AddActor(scene, pos + TILE_SIZE.resize<3>() / 2, def.texture, def.size, def.speed);
+    entity->name = def.texture;
 
     scene->addToGroup(ENEMY_GROUP, entity);
 
@@ -55,6 +57,11 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
 }
 
 void Enemies::onFixedUpdate(double dt) {
+
+    if (m_state->paused) {
+        return;
+    }
+
     m_size = 0;
     scene->entities.forEach<AI>([&](AI* ai, hg::Entity* entity) {
         if (!entity) {
@@ -82,8 +89,13 @@ void Enemies::renderUI() {
         auto ai = entity->getComponent<AI>();
         if (ai) {
             if (ai->m_behavior->getCurrent()) {
+                ImGui::SameLine();
                 auto behavior = ai->m_behavior->getCurrent()->operator std::string();
-                ImGui::Text(behavior.c_str());
+                ImGui::Text(("[" + behavior + "]").c_str());
+            }
+
+            for (auto &[key, value]: *ai->m_behavior->context()) {
+                ImGui::Text(("\t" + BTagNames[key] + " = " + toString(value)).c_str());
             }
         }
 

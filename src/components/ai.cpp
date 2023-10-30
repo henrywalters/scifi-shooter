@@ -19,18 +19,13 @@ AI::AI(EnemyType type, Tilemap *tilemap, GameState* gameState):
     m_tilemap(tilemap),
     m_pathfinding([&](utils::PathFinding::Node node) {
         return m_tilemap->findNeighbors(0, node);
-    }),
-    m_behavior(std::make_unique<BehaviorTree<EnemyState>>())
+    })
 {
 
     m_state.game = gameState;
 
-    if (m_type == EnemyType::Slime) {
-        m_behavior->setRoot<Sequence<EnemyState>>();
-        m_behavior->addChild<RandomLocation>(m_behavior->root());
-        m_behavior->addChild<FindPath>(m_behavior->root());
-        m_behavior->addChild<MoveOnPath>(m_behavior->root());
-    }
+    m_behavior = std::make_unique<hg::utils::BehaviorTree<EnemyState>>();
+    CreateBehavior(type, m_behavior.get());
 }
 
 void AI::idle() {
@@ -120,7 +115,6 @@ void AI::onUpdate(double dt) {
     m_state.entity = entity;
 
     m_behavior->tick(dt, &m_state);
-    // std::cout << m_behavior->getCurrent() << "\n";
 
     /*
 

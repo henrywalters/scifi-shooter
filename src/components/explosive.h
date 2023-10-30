@@ -32,8 +32,6 @@ public:
                     if (neighbor->hasComponent<hg::HealthBar>()) {
                         if (actor->alive()) {
                             neighbor->getComponent<hg::HealthBar>()->health = actor->health;
-                        } else {
-                            actor->die(scene);
                         }
                     }
                 }

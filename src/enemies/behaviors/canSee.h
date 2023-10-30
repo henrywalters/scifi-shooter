@@ -9,16 +9,14 @@
 
 #include "../enemyState.h"
 
-class CanSee : public hg::utils::bt::Node<EnemyState> {
+const int RAYCAST_CHECKS = 10;
+
+class CanSee : public hg::utils::bt::Service<EnemyState> {
 public:
 
     CanSee(std::vector<std::string> groups);
 
     hg::utils::bt::Status process(double dt, EnemyState* state, hg::utils::bt::data_context_t* ctx) override;
-
-protected:
-
-
 
 private:
 

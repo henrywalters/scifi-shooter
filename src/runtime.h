@@ -21,6 +21,7 @@
 
 #include "constants.h"
 #include "gamestate.h"
+#include "console.h"
 
 class Runtime : public hg::Scene {
 public:
@@ -37,6 +38,7 @@ public:
     void setSize(hg::Vec2i size);
 
     GameState* state();
+    Console* console();
 
 protected:
 
@@ -47,7 +49,7 @@ protected:
 private:
 
     hg::graphics::Window* m_window;
-
+    std::unique_ptr<Console> m_console;
     std::unique_ptr<GameState> m_state;
 
     void renderUI(double dt);

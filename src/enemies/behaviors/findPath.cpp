@@ -2,6 +2,7 @@
 // Created by henry on 10/9/23.
 //
 #include "findPath.h"
+#include "tags.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -9,7 +10,7 @@ using namespace hg::utils::bt;
 
 void FindPath::init(EnemyState *state, data_context_t *ctx) {
     auto start = state->entity->transform.position.resize<2>();
-    auto end = GetData<Vec2>(ctx, "path_end");
+    auto end = GetData<Vec2>(ctx, (uuid_t)BTags::PathEnd);
     m_pathfinding.start(
     state->game->tilemap->getIndex(start),
     state->game->tilemap->getIndex(end)
@@ -36,7 +37,7 @@ Status FindPath::process(double dt, EnemyState *state, data_context_t *ctx) {
         }
 
         std::vector<Vec2i> path = m_pathfinding.constructPath(m_pathfinding.m_current);
-        SetData(ctx, "path", path);
+        SetData(ctx, (uuid_t)BTags::Path, path);
 
         return Status::Success;
     }

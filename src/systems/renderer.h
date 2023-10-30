@@ -36,6 +36,9 @@ enum class RenderMode {
 class Renderer : public hg::System {
 public:
 
+    const float CONSOLE_MOVE_DUR = 1;
+    const int CROSSHAIR_WIDTH = 2;
+
     hg::graphics::OrthographicCamera m_camera;
 
     Renderer(hg::graphics::Window* window, GameState* state);
@@ -51,6 +54,7 @@ public:
     hg::Vec2 getMousePos(hg::Vec2 rawMousePos);
 
     void setLaserPointer(hg::Vec3 start, hg::Vec3 end);
+    void setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius);
 
 private:
 
@@ -68,10 +72,14 @@ private:
     hg::graphics::TextBuffer m_weapon;
     hg::graphics::TextBuffer m_ammo;
     hg::graphics::TextBuffer m_enemies;
+
     std::unique_ptr<hg::graphics::MeshInstance> m_laserMesh;
     hg::graphics::primitives::Line m_laser;
     hg::graphics::primitives::Disc m_laserDisc;
     std::unique_ptr<hg::graphics::MeshInstance> m_laserDiscMesh;
+
+    std::array<hg::graphics::primitives::Quad, 4> m_crossHairQuads;
+    std::array<std::unique_ptr<hg::graphics::MeshInstance>, 4> m_crossHairMeshes;
 };
 
 #endif //SCIFISHOOTER_RENDERER_H

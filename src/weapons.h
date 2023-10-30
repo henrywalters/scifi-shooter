@@ -52,6 +52,10 @@ public:
     hg::Entity* source;
     Runtime* runtime;
 
+    hg::Vec2 computeSpread() override {
+        return hg::Vec2(m_spread, 0);
+    }
+
     /*
      * shotsPerCast - number of raycasts sent per cast
      * spread - the direction will be rotated by +/- spread

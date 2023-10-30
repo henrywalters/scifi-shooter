@@ -17,6 +17,7 @@ public:
 
     float maxHealth = 100.0f;
     float health = 100.0f;
+    float fov = M_PI - M_PI / 8.0;
     hg::Vec2 size = DEFAULT_ACTOR_SIZE;
     hg::common::Weapons weapons;
     hg::Vec2 direction = hg::Vec2::Zero();
@@ -29,10 +30,6 @@ public:
 
     bool alive() const {
         return health > 0;
-    }
-
-    virtual void die(hg::Scene* scene) {
-        scene->entities.remove(entity);
     }
 };
 
