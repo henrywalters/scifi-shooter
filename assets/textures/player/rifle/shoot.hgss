@@ -1,0 +1,16 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+frameCount=3
+fps=30
+animated=1
+size=3,1
+path=/home/henry/development/games/scifi-shooter/assets/textures/player/rifle/shoot.png
+
+
+

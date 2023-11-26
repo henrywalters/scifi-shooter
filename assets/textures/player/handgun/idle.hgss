@@ -1,0 +1,17 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+looping=1
+frameCount=20
+fps=30
+animated=1
+size=4,5
+path=/home/henry/development/games/scifi-shooter/assets/textures/player/handgun/idle.png
+
+
+

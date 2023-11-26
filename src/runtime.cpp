@@ -7,6 +7,8 @@
 #include "constants.h"
 #include "components/projectile.h"
 
+#include "game.h"
+
 #include <hagame/core/game.h>
 #include <hagame/utils/profiler.h>
 
@@ -17,9 +19,12 @@
 #include "systems/enemies.h"
 #include "systems/actors.h"
 #include "systems/weapons.h"
+#include "systems/items.h"
+#include "systems/audio.h"
+
 #include "imgui_node.h"
 
-using namespace hg;
+
 using namespace hg::utils;
 using namespace hg::graphics;
 
@@ -36,6 +41,13 @@ void Runtime::loadLevel(std::string level) {
     m_state->tilemap->load(config);
     m_state->tilemap->zIndex(1);
 
+    auto items = getSystem<Items>();
+
+    items->spawn(items->get("shotgun"), m_state->randomTilemapPos());
+
+    for (int i = 0; i < 15; i++) {
+        items->spawn(items->get("Small Health"), m_state->randomTilemapPos());
+    }
 }
 
 
@@ -43,13 +55,15 @@ void Runtime::onInit() {
 
     m_state->scene = this;
 
+    addSystem<AudioSystem>();
     addSystem<Actors>(m_state.get());
     addSystem<Renderer>(m_window, m_state.get());
-    addSystem<Player>(m_window, m_state.get());
     addSystem<Enemies>(m_state.get());
     addSystem<Weapons>(m_state.get());
+    addSystem<Items>(m_state.get())->load(MultiConfig::Parse(hg::ASSET_DIR + "items.hg"));
+    addSystem<Player>(m_window, m_state.get());
 
-    for (const auto& file : d_listFiles(ASSET_DIR + "particles")) {
+    for (const auto& file : d_listFiles(hg::ASSET_DIR + "particles")) {
         auto parts = f_getParts(file);
         ParticleEmitterSettings settings;
         settings.load(Config::Parse(f_readLines(file)));
@@ -59,7 +73,7 @@ void Runtime::onInit() {
 
     loadLevel(hg::ASSET_DIR + "levels/level_1.hgtmp");
 
-    m_window->input.keyboardMouse.events.subscribe(input::devices::KeyboardEvent::KeyPressed, [&](auto keyPress) {
+    m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::KeyPressed, [&](auto keyPress) {
         if (keyPress.key == '`') {
             m_console->toggle();
             m_state->paused = m_console->isOpen() || m_state->menuOpen;
@@ -69,30 +83,30 @@ void Runtime::onInit() {
             return;
         }
 
-        if (keyPress.key == input::devices::KeyboardMouse::BACKSPACE) {
+        if (keyPress.key == hg::input::devices::KeyboardMouse::BACKSPACE) {
             m_console->backspace();
         }
 
-        if (keyPress.key == input::devices::KeyboardMouse::ENTER) {
+        if (keyPress.key == hg::input::devices::KeyboardMouse::ENTER) {
             m_console->submit();
         }
 
-        if (keyPress.key == input::devices::KeyboardMouse::UP) {
+        if (keyPress.key == hg::input::devices::KeyboardMouse::UP) {
             m_console->prevHistory();
         }
 
-        if (keyPress.key == input::devices::KeyboardMouse::DOWN) {
+        if (keyPress.key == hg::input::devices::KeyboardMouse::DOWN) {
             m_console->nextHistory();
         }
     });
 
-    m_window->input.keyboardMouse.events.subscribe(input::devices::KeyboardEvent::TextInput, [&](auto keyPress) {
+    m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::TextInput, [&](auto keyPress) {
         if (m_console->status() == Console::Status::Open) {
             m_console->newChar(keyPress.key);
         }
     });
 
-    m_console = std::make_unique<Console>(getFont("8bit"));
+    m_console = std::make_unique<Console>(hg::getFont("8bit"));
     m_console->registerCommand("test", [&](auto args) {
         for (int i = 0; i < std::get<int>(args[0].value); i++) {
             m_console->putLine(std::to_string(i));
@@ -137,6 +151,20 @@ void Runtime::onInit() {
         hg::utils::f_write(m_console->HISTORY_FILE, "");
         return 0;
     });
+
+    m_console->registerCommand("entities", [&](auto args) {
+        entities.forEach([&](auto entity) {
+            m_console->putLine(entity->name + " <" + std::to_string(entity->id()) + ">");
+        });
+        return 0;
+    });
+
+    m_console->registerCommand("help", [&](auto args) {
+        for (const auto& [cmd, def] : m_console->m_commands) {
+            m_console->putLine(cmd + " " + def.help());
+        }
+        return 0;
+    });
 }
 
 void Runtime::onFixedUpdate(double dt) {
@@ -163,7 +191,7 @@ void Runtime::onUpdate(double dt) {
 }
 
 void Runtime::setSize(hg::Vec2i size) {
-    // m_camera.size = size;
+    getSystem<Renderer>()->setWindowSize(size);
 }
 
 void Runtime::renderUI(double dt) {
@@ -184,6 +212,20 @@ void Runtime::renderUI(double dt) {
     ImGui::Checkbox("Debug Render", &m_state->params.debugRender);
     ImGui::Checkbox("Player Invincible", &m_state->params.invincible);
     ImGui::Checkbox("VSync", &m_state->params.vsync);
+
+    /*
+
+    auto ss = ((Game*)game())->player()->getSource(m_source);
+    if (ss) {
+        auto settings = ss->settings();
+        ImGui::DragFloat("Pitch", &settings.pitch, 0.01, 0.0, 2);
+        ImGui::DragFloat("Gain", &settings.gain, 0.01, 0.0, 1);
+        // settings.position[0] = m_window->input.keyboardMouse.mouse.position[0] * 1000;
+        ((Game*)game())->player()->updateSource(m_source, settings);
+    }
+
+     */
+
 
     ImGui::End();
 
@@ -206,8 +248,8 @@ void Runtime::nextWave() {
     auto enemies = getSystem<Enemies>();
     auto player = getSystem<Player>();
 
-    int y = 0;
-    int m = 1;
+    int y = 1;
+    int m = 0;
 
     for (int i = 0; i < y + m_state->wave * m; i++) {
         auto entity = enemies->spawn(EnemyType::Slime, m_state->randomTilemapPos().resize<3>());

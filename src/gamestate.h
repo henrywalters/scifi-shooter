@@ -11,6 +11,7 @@
 #include <hagame/core/scene.h>
 #include "runtimeParams.h"
 #include "constants.h"
+#include "items.h"
 
 struct GameState {
 
@@ -42,6 +43,7 @@ struct GameState {
 
     // Return the set of entities which are within the radius of the position, and not occluded by a wall. Useful for explosions and such
     std::vector<hg::Entity*> inVisibleRadius(hg::Vec2 pos, float radius, std::vector<hg::Entity*> ignore = {});
+
 };
 
 #endif //SCIFISHOOTER_GAMESTATE_H

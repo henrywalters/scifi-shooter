@@ -1,0 +1,17 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+looping=0
+frameCount=15
+fps=30
+animated=1
+size=3,5
+path=/home/henry/development/games/scifi-shooter/assets/textures/player/handgun/reload.png
+
+
+

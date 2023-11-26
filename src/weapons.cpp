@@ -6,10 +6,12 @@
 
 #include <hagame/graphics/components/particleEmitterComponent.h>
 #include <hagame/common/components/healthBar.h>
+#include <hagame/graphics/components/spriteSheetAnimator.h>
 #include <hagame/utils/random.h>
 #include "components/projectile.h"
 #include "components/explosive.h"
 #include "systems/player.h"
+#include "systems/audio.h"
 
 void ProjectileWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
     hg::utils::Random rand;
@@ -45,6 +47,13 @@ void RocketWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
 
 void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
     hg::utils::Random rand;
+
+    auto aPlayer = source->getComponentInChildren<hg::graphics::components::SpriteSheetAnimator>()->player;
+    aPlayer->triggerImmediately("player/" + this->settings.name + "/shoot");
+
+    auto audio = runtime->getSystem<AudioSystem>();
+    audio->setSourcePosition(source, source->position(), hg::Vec3::Zero());
+    audio->playSource(source);
 
     for (int i = 0; i < m_shotsPerCast; i++) {
         float spread = rand.real<float>(-m_spread, m_spread);

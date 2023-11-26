@@ -10,6 +10,8 @@
 
 class Runtime;
 
+// This file contains a set of base weapons, each of which can be customized using a WeaponDefinition
+
 class ProjectileWeapon : public hg::common::Weapon {
 public:
 

@@ -1,0 +1,16 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+frameCount=2
+fps=2
+animated=1
+size=1,2
+path=/home/henry/development/games/scifi-shooter/assets/textures/devilmeetsprada.png
+
+
+

@@ -15,6 +15,11 @@ const hg::Vec2 DEFAULT_ACTOR_SIZE = hg::Vec2(64, 64);
 class Actor : public hg::Component {
 public:
 
+    std::function<void()> onDeath = []() {};
+
+    int level = 1;
+    int exp = 0;
+
     float maxHealth = 100.0f;
     float health = 100.0f;
     float fov = M_PI - M_PI / 8.0;

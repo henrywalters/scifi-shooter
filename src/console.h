@@ -90,11 +90,11 @@ public:
 
     bool isOpen() const { return m_status == Status::Opening || m_status == Status::Open; }
 
+    std::unordered_map<std::string, Command> m_commands;
+
 private:
 
     int m_historyIdx = 0;
-
-    std::unordered_map<std::string, Command> m_commands;
 
     double m_elapsedTime;
 

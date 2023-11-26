@@ -1,5 +1,5 @@
 MESSAGE("FINDING HAGAME2 LIB")
-# set(CMAKE_FIND_DEBUG_MODE TRUE)
+set(CMAKE_FIND_DEBUG_MODE TRUE)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER)
@@ -39,10 +39,18 @@ find_library(BOX2D_LIBRARY
         PATHS ${FIND_HAGAME2_PATHS}/thirdparty/box2d/build/bin/
         )
 
+find_library(OPENAL_LIBRARY
+        NAMES openal
+        PATH_SUFFIXES so
+        PATHS ${FIND_HAGAME2_PATHS}/thirdparty/openal-soft/
+        )
+
 # add_subdirectory(${FIND_HAGAME2_PATHS}/thirdparty/box2d/)
 
 include_directories("${FIND_HAGAME2_PATHS}/thirdparty/entt/src/")
 include_directories("${FIND_HAGAME2_PATHS}/thirdparty/box2d/include/")
+include_directories("${FIND_HAGAME2_PATHS}/thirdparty/openal-soft/include/")
+include_directories("${FIND_HAGAME2_PATHS}/thirdparty/AudioFile/")
 
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
@@ -51,4 +59,5 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 MESSAGE("FIND_HAGAME2_PATHS = ${FIND_HAGAME2_PATHS}")
 MESSAGE("HAGAME2_INCLUDE_DIR = ${HAGAME2_INCLUDE_DIR}")
 MESSAGE("HAGAME2_LIBRARY = ${HAGAME2_LIBRARY}")
+MESSAGE("OPENAL_LIBRARY = ${OPENAL_LIBRARY}")
 MESSAGE("BOX2D_LIBRARY = ${BOX2D_LIBRARY}")

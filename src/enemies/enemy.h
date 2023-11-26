@@ -15,6 +15,7 @@
 #include "behaviors/canSee.h"
 #include "behaviors/targetLocation.h"
 #include "behaviors/correctPath.h"
+#include "behaviors/explode.h"
 
 
 enum class EnemyType {
@@ -26,6 +27,7 @@ struct EnemyDef {
     std::string texture;
     hg::Vec2 size;
     float speed;
+    float health;
     std::shared_ptr<hg::utils::BehaviorTree<EnemyState>> behavior;
 };
 
@@ -33,7 +35,8 @@ const EnemyDef Slime = EnemyDef{
         EnemyType::Slime,
         "slime",
         hg::Vec2(32, 32),
-        500,
+        100,
+        200,
         std::make_shared<hg::utils::BehaviorTree<EnemyState>>()
 };
 
@@ -54,8 +57,9 @@ void CreateBehavior(EnemyType type, hg::utils::BehaviorTree<State>* bt) {
         bt->template addChild<TargetLocation>(attackSeq);
         bt->template addChild<FindPath>(attackSeq);
         bt->template addChild<MoveOnPath>(attackSeq);
+        bt->template addChild<Explode>(attackSeq, 25, 1000, "slime_explosion");
 
-        bt->template addService<CanSee>(std::vector<std::string>({"player"}))->ticksPerSecond = 4.0;
+        bt->template addService<CanSee>(std::vector<std::string>({"player"}))->ticksPerSecond = 16.0;
         bt->template addService<CorrectPath>()->ticksPerSecond = 16.0;
     }
 }

@@ -8,7 +8,12 @@
 #include <iostream>
 #include <hagame/math/components/rectCollider.h>
 #include <hagame/math/components/circleCollider.h>
+#include <hagame/graphics/components/spriteSheetAnimator.h>
+#include <hagame/graphics/shaders/texture.h>
+#include <hagame/graphics/shaders/particle.h>
+#include <hagame/graphics/shaders/text.h>
 #include "../runtime.h"
+#include "../components/item.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -18,12 +23,15 @@ using namespace hg::math::components;
 
 Renderer::Renderer(Window* window, GameState* state):
         m_state(state),
-        m_quad(Vec2(2, 2), Vec2(0, 0), true),
+        m_quad(window->size().cast<float>(), Vec2(0, 0), true),
         m_mesh(&m_quad),
         m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
         m_window(window),
         m_laserDisc(3, 10)
 {
+    m_quad.centered(false);
+    m_mesh.update(&m_quad);
+
     m_laserMesh = std::make_unique<MeshInstance>(&m_laser);
     m_laserDiscMesh = std::make_unique<MeshInstance>(&m_laserDisc);
 
@@ -34,16 +42,23 @@ Renderer::Renderer(Window* window, GameState* state):
     }
 }
 
+void Renderer::setWindowSize(hg::Vec2i size) {
+    m_camera.size = size;
+    m_quad.size(size.cast<float>());
+}
+
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
     m_camera.size = GAME_SIZE;
     m_camera.centered = true;
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
 
+    m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
+
     // m_window->setMouseVisible(false);
 
     auto colorShader = getShader("color");
-    auto textShader = getShader("text");
+    auto textShader = getShader(TEXT_SHADER.name);
     auto font = getFont("8bit");
 
     Debug::Initialize(colorShader, textShader, font);
@@ -66,7 +81,7 @@ void Renderer::onBeforeUpdate() {
 
     Debug::ENABLED = m_state->params.debugRender;
 
-    auto shader = getShader("text");
+    auto shader = getShader(TEXT_SHADER.name);
     shader->use();
 
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
@@ -89,13 +104,16 @@ void Renderer::onUpdate(double dt) {
 
     auto player = scene->getSystem<Player>();
     auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
-    if (m_weapon.text() != weapon->settings.name) {
-        m_weapon.text(weapon->settings.name);
-    }
 
-    std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
-    if (m_ammo.text() != ammoText) {
-        m_ammo.text(ammoText);
+    if (weapon) {
+        if (m_weapon.text() != weapon->settings.name) {
+            m_weapon.text(weapon->settings.name);
+        }
+
+        std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
+        if (m_ammo.text() != ammoText) {
+            m_ammo.text(ammoText);
+        }
     }
 
     std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
@@ -109,7 +127,7 @@ void Renderer::onUpdate(double dt) {
     }
 
 
-    auto shader = getShader("sprite");
+    auto shader = getShader(TEXTURE_SHADER.name);
     shader->use();
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
@@ -118,6 +136,21 @@ void Renderer::onUpdate(double dt) {
         shader->setMat4("model", entity->model());
         getTexture(sprite->texture)->bind();
         sprite->mesh()->render();
+    });
+
+    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto sprites, auto entity) {
+        sprites->update(dt);
+        shader->setMat4("model", entity->model());
+        SpriteSheet* sheet = (SpriteSheet*) sprites->player->get();
+        if (!sheet) {
+            return;
+        }
+        auto rect = sheet->getRect();
+        sprites->quad->texOffset(rect.pos);
+        sprites->quad->texSize(rect.size);
+        sprites->mesh()->update(sprites->quad.get());
+        sheet->texture()->bind();
+        sprites->mesh()->render();
     });
 
     scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
@@ -159,17 +192,17 @@ void Renderer::onUpdate(double dt) {
         m_crossHairMeshes[i]->render();
     }
 
-    shader = getShader("particle");
+    shader = getShader(PARTICLE_SHADER.name);
     shader->use();
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
     shader->setMat4("model", Mat4::Identity());
 
     scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
-        emitter->render(getShader("particle"));
+        emitter->render(shader);
     });
 
-    shader = getShader("text_buffer");
+    shader = getShader(TEXT_BUFFER_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
@@ -191,8 +224,11 @@ void Renderer::onUpdate(double dt) {
 
     m_renderPasses.render(RenderMode::Color, 1);
 
-    shader = getShader("display");
+    shader = getShader(TEXTURE_SHADER.name);
     shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
 
     m_renderPasses.get(RenderMode::Color)->texture->bind();
     m_mesh.render();
@@ -257,4 +293,5 @@ void Renderer::setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius) 
         m_crossHairMeshes[i]->update(&m_crossHairQuads[i]);
     }
 }
+
 

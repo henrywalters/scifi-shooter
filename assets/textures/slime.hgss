@@ -1,0 +1,16 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+frameCount=3
+fps=10
+animated=1
+size=2,2
+path=/home/henry/development/games/scifi-shooter/assets/textures/slime.png
+
+
+

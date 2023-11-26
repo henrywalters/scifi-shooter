@@ -2,8 +2,8 @@
 // Created by henry on 9/24/23.
 //
 
-#ifndef SCIFISHOOTER_WEAPONS_H
-#define SCIFISHOOTER_WEAPONS_H
+#ifndef SCIFISHOOTER_WEAPONS_SYSTEM_H
+#define SCIFISHOOTER_WEAPONS_SYSTEM_H
 
 #include <hagame/core/entity.h>
 #include <hagame/core/system.h>

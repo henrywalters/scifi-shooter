@@ -71,6 +71,7 @@ void Actors::onAfterUpdate() {
 
     scene->entities.forEach<Actor>([&](Actor* actor, Entity* entity) {
         if (!actor->alive()) {
+            actor->onDeath();
             scene->entities.remove(entity);
         }
     });

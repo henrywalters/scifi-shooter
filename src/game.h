@@ -7,6 +7,7 @@
 
 #include <hagame/core/game.h>
 #include "constants.h"
+#include <hagame/audio/player.h>
 
 class Game : public hg::Game {
 public:
@@ -21,8 +22,6 @@ public:
         hg::Game(name)
     {}
 #endif
-
-
 
 protected:
 

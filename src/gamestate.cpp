@@ -2,8 +2,11 @@
 // Created by henry on 9/25/23.
 //
 #include "gamestate.h"
+#include "components/item.h"
+#include <hagame/graphics/components/sprite.h>
 
 using namespace hg;
+using namespace hg::graphics;
 
 Vec2 GameState::randomTilemapPos() {
     bool isValid = false;

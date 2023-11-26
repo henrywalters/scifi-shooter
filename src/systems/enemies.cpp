@@ -2,8 +2,11 @@
 // Created by henry on 8/26/23.
 //
 
+#include <hagame/core/assets.h>
+
 #include "imgui.h"
 #include <variant>
+#include <hagame/graphics/components/spriteSheetAnimator.h>
 #include "enemies.h"
 
 #include "../utils.h"
@@ -42,6 +45,15 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
     EnemyDef def = ENEMIES.get(type);
 
     hg::Entity* entity = AddActor(scene, pos + TILE_SIZE.resize<3>() / 2, def.texture, def.size, def.speed);
+    auto actor = entity->getComponent<Actor>();
+    auto animator = entity->getComponentInChildren<hg::graphics::components::SpriteSheetAnimator>();
+    auto aPlayer = animator->player.get();
+    aPlayer->addAnimation("slime", getSpriteSheet("slime"));
+    aPlayer->trigger("slime");
+
+    entity->getComponent<Actor>()->maxHealth = def.health;
+    entity->getComponent<Actor>()->health = def.health;
+
     entity->name = def.texture;
 
     scene->addToGroup(ENEMY_GROUP, entity);
@@ -78,7 +90,7 @@ void Enemies::onFixedUpdate(double dt) {
 }
 
 void Enemies::onUpdate(double dt) {
-    renderUI();
+    // renderUI();
 }
 
 void Enemies::renderUI() {

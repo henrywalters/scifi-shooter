@@ -17,6 +17,7 @@
 #include <hagame/utils/pathfinding.h>
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/textBuffer.h>
+#include <hagame/audio/player.h>
 #include "components/actor.h"
 
 #include "constants.h"
@@ -47,6 +48,8 @@ protected:
     void onUpdate(double dt) override;
 
 private:
+
+    hg::audio::Player* m_player;
 
     hg::graphics::Window* m_window;
     std::unique_ptr<Console> m_console;

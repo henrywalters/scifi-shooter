@@ -1,0 +1,15 @@
+~Groups~
+
+
+
+
+~SpriteSheet~
+
+[settings]
+size=3,7
+looping=1
+path=/home/henry/development/games/scifi-shooter/assets/textures/player/shotgun/move.png
+animated=1
+fps=24
+frameCount=20
+

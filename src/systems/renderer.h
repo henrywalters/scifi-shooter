@@ -56,10 +56,14 @@ public:
     void setLaserPointer(hg::Vec3 start, hg::Vec3 end);
     void setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius);
 
+    void setWindowSize(hg::Vec2i size);
+
 private:
 
     hg::graphics::Window* m_window;
     GameState* m_state;
+
+    float m_aspectRatio;
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
 

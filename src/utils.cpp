@@ -3,7 +3,7 @@
 //
 #include "utils.h"
 
-#include <hagame/graphics/components/sprite.h>
+#include <hagame/graphics/components/spriteSheetAnimator.h>
 #include <hagame/common/components/topDownPlayerController.h>
 #include <hagame/common/components/healthBar.h>
 
@@ -19,8 +19,7 @@ Entity* AddActor(hg::Scene* scene, hg::Vec3 pos, std::string texture, hg::Vec2 s
 
     entity->transform.position = pos;
 
-    auto sprite = body->addComponent<Sprite>(size);
-    sprite->texture = texture;
+    body->addComponent<components::SpriteSheetAnimator>(size, Vec2::Zero());
 
     auto actor = entity->addComponent<Actor>();
     actor->size = size;
