@@ -12,6 +12,7 @@
 #include <hagame/graphics/shaders/texture.h>
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
+#include <hagame/graphics/resolution.h>
 #include "../runtime.h"
 #include "../components/item.h"
 
@@ -43,13 +44,13 @@ Renderer::Renderer(Window* window, GameState* state):
 }
 
 void Renderer::setWindowSize(hg::Vec2i size) {
-    m_camera.size = size;
+    m_camera.size = size.cast<float>();
     m_quad.size(size.cast<float>());
 }
 
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
-    m_camera.size = GAME_SIZE;
+    m_camera.size = GAME_SIZE.copy().cast<float>();
     m_camera.centered = true;
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
 
