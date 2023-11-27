@@ -5,15 +5,14 @@ type=1
 
 [ParticleEmitter]
 startColor=1.000000,1.000000,1.000000,0.000000
-scale=0.000000,4.900000
-speed=8.000000,433.000000
+endColor=1.000000,1.000000,1.000000,0.223529
+scale=0.000000,0.100000
+speed=0.000000,1.000000
 angle=0.000000,360.000000
 gravity=0.000000,0.000000,0.000000
-singleShotParticles=100
+singleShotParticles=592
 singleShotDuration=0.200000
 singleShot=1
-endColor=1.000000,1.000000,1.000000,0.223529
-aliveFor=0.001000,0.100000
+aliveFor=0.001000,0.440000
 positionRelative=1
-particlesPerSecond=1
-
+particlesPerSecond=1000

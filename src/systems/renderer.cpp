@@ -68,7 +68,7 @@ void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
     m_camera.size = Vec2(m_state->aspectRatio.ratio(), 1) * m_state->metersPerViewport;
     m_camera.centered = true;
-    m_renderPasses.create(RenderMode::Color, FULL_HD);
+    m_renderPasses.create(RenderMode::Color, HD);
     // m_renderPasses.create(RenderMode::Display, m_window->size());
 
     m_quad.centered(false);
@@ -99,7 +99,7 @@ void Renderer::onBeforeUpdate() {
 
     m_window->color(m_state->tilemap->background);
     m_renderPasses.bind(RenderMode::Color);
-    glViewport(0, 0, FULL_HD[0], FULL_HD[1]);
+    glViewport(0, 0, HD[0], HD[1]);
     m_renderPasses.clear(RenderMode::Color, Color(100, 100, 100));
 
     Debug::ENABLED = m_state->params.debugRender;

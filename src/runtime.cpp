@@ -250,7 +250,7 @@ void Runtime::nextWave() {
     auto enemies = getSystem<Enemies>();
     auto player = getSystem<Player>();
 
-    int y = 0;
+    int y = 1;
     int m = 0;
 
     for (int i = 0; i < y + m_state->wave * m; i++) {

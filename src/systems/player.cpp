@@ -121,7 +121,7 @@ void Player::onUpdate(double dt) {
 
     renderer->setLaserPointer(laserRay.origin, laserHit.resize<3>());
 
-    renderer->setCrossHair(m_mousePos, 0.5, 0.8);
+    renderer->setCrossHair(m_mousePos, 0.1, 0.15);
 
     auto actor = player->getComponent<Actor>();
 
