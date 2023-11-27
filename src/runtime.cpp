@@ -203,6 +203,8 @@ void Runtime::renderUI(double dt) {
     ImGui::Text(("Fixed Tick Rate: " + std::to_string(1.0f / game()->fixedDt())).c_str());
     ImGui::SliderInt("Ticks per Second", &game()->fixedTicksPerSecond, 1, 120);
     ImGui::DragFloat("Zoom", &m_state->zoom, 0.1f, 0.1f, 3.0f);
+    ImGui::SliderFloat("Pixels Per Meter", &m_state->pixelsPerMeter, 1, 128);
+    ImGui::SliderFloat("Meters Per Viewport Height", &m_state->metersPerViewport, 1, 1000);
     ImGui::Checkbox("Paused?", &m_state->paused);
 
     getSystem<Player>()->ui();
@@ -248,7 +250,7 @@ void Runtime::nextWave() {
     auto enemies = getSystem<Enemies>();
     auto player = getSystem<Player>();
 
-    int y = 1;
+    int y = 0;
     int m = 0;
 
     for (int i = 0; i < y + m_state->wave * m; i++) {

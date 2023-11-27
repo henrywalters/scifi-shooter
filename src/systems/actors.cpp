@@ -44,9 +44,9 @@ void Actors::onFixedUpdate(double dt) {
 
         controller->velocity(vel);
 
-        if (hg::nearEqual<float>(vel.magnitude(), 0, 1)) {
-            controller->velocity(hg::Vec3::Zero());
-        }
+        //if (hg::nearEqual<float>(vel.magnitude(), 0, 0)) {
+        //    controller->velocity(hg::Vec3::Zero());
+        //}
 
         entity->transform.position += controller->velocity() * dt;
 

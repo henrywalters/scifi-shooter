@@ -31,13 +31,14 @@
 
 enum class RenderMode {
     Color,
+    Display,
 };
 
 class Renderer : public hg::System {
 public:
 
     const float CONSOLE_MOVE_DUR = 1;
-    const int CROSSHAIR_WIDTH = 2;
+    const float CROSSHAIR_WIDTH = 0.1f;
 
     hg::graphics::OrthographicCamera m_camera;
 
@@ -62,8 +63,6 @@ private:
 
     hg::graphics::Window* m_window;
     GameState* m_state;
-
-    float m_aspectRatio;
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
 

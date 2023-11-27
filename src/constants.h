@@ -13,7 +13,7 @@
 
 #define RANDOM_SEED 420
 
-const hg::Vec2 TILE_SIZE = hg::Vec2(64, 64);
+const hg::Vec2 TILE_SIZE = hg::Vec2(1, 1);
 
 #define ENEMY_GROUP "enemies"
 #define PLAYER_GROUP  "player"

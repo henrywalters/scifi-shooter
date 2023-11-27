@@ -8,7 +8,9 @@
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/tilemap.h>
 #include <hagame/graphics/particleEmitter.h>
+#include <hagame/graphics/aspectRatios.h>
 #include <hagame/core/scene.h>
+#include <hagame/graphics/resolution.h>
 #include "runtimeParams.h"
 #include "constants.h"
 #include "items.h"
@@ -19,11 +21,14 @@ struct GameState {
     bool menuOpen = false;
     int wave = 0;
     float zoom = 1.5f;
+    float pixelsPerMeter = 64;
+    float metersPerViewport = 5;
     hg::Scene* scene;
     hg::utils::Random random;
     RuntimeParameters params;
     hg::EntityMap2D entityMap;
     std::unique_ptr<hg::graphics::Tilemap> tilemap;
+    hg::graphics::AspectRatio aspectRatio = hg::graphics::AR_16x9;
     hg::utils::Store<std::string, hg::graphics::ParticleEmitterSettings> particles;
 
     GameState(hg::Vec2 tileSize):

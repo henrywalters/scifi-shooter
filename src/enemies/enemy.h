@@ -34,9 +34,9 @@ struct EnemyDef {
 const EnemyDef Slime = EnemyDef{
         EnemyType::Slime,
         "slime",
-        hg::Vec2(32, 32),
+        hg::Vec2(0.5, 0.5),
+        0.5,
         100,
-        200,
         std::make_shared<hg::utils::BehaviorTree<EnemyState>>()
 };
 

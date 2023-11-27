@@ -27,11 +27,10 @@ Renderer::Renderer(Window* window, GameState* state):
         m_mesh(&m_quad),
         m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
         m_window(window),
-        m_laserDisc(3, 10)
+        m_laserDisc(0.2, 10)
 {
-    m_quad.centered(false);
     m_mesh.update(&m_quad);
-
+    m_laser.thickness(0.1);
     m_laserMesh = std::make_unique<MeshInstance>(&m_laser);
     m_laserDiscMesh = std::make_unique<MeshInstance>(&m_laserDisc);
 
@@ -43,19 +42,40 @@ Renderer::Renderer(Window* window, GameState* state):
 }
 
 void Renderer::setWindowSize(hg::Vec2i size) {
-    m_camera.size = size;
-    m_quad.size(size.cast<float>());
+    //m_camera.windowSize = size.cast<float>();
+    //hg::Rect viewport = m_camera.getViewport();
+    //m_quad.offset(viewport.pos);
+    //m_quad.size(viewport.size);
+    //m_renderPasses.resize(RenderMode::Color, viewport.size.cast<int>());
+    //m_quad.size(size.cast<float>());
+    //m_mesh.update(&m_quad);
+
+    auto viewport = m_state->aspectRatio.getViewport(size.cast<float>());
+    m_quad.offset(viewport.pos);
+    m_quad.size(viewport.size);
+    m_mesh.update(&m_quad);
+    //m_renderPasses.resize(RenderMode::Color, viewport.size.cast<int>());
+    m_wave.pos(Vec3(m_window->size().x() / 2, m_window->size().y() - 50, 0));
+    m_enemies.pos(Vec3(m_window->size().x() / 2, m_window->size().y() - 75, 0));
+    m_weapon.pos(Vec3(m_window->size().x() - 200, 50));
+    m_ammo.pos(Vec3(m_window->size().x() - 200, 75));
 }
 
 void Renderer::onInit() {
+
+    //m_camera.windowSize = Vec2(GAME_SIZE[0], GAME_SIZE[1]);
+
     m_camera.zoom = m_state->zoom;
-    m_camera.size = GAME_SIZE;
+    m_camera.size = Vec2(m_state->aspectRatio.ratio(), 1) * m_state->metersPerViewport;
     m_camera.centered = true;
-    m_renderPasses.create(RenderMode::Color, GAME_SIZE);
+    m_renderPasses.create(RenderMode::Color, FULL_HD);
+    // m_renderPasses.create(RenderMode::Display, m_window->size());
 
-    m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
-
-    // m_window->setMouseVisible(false);
+    m_quad.centered(false);
+    auto viewport = m_state->aspectRatio.getViewport(m_window->size().cast<float>());
+    m_quad.offset(viewport.pos);
+    m_quad.size(viewport.size);
+    m_mesh.update(&m_quad);
 
     auto colorShader = getShader("color");
     auto textShader = getShader(TEXT_SHADER.name);
@@ -74,16 +94,20 @@ void Renderer::onBeforeUpdate() {
     // m_window->setMouseVisible(m_state->paused);
 
     m_camera.zoom = m_state->zoom;
+    m_camera.size = Vec2(m_state->aspectRatio.ratio(), 1) * m_state->metersPerViewport;
+    //m_camera.metersPerViewport = m_state->metersPerViewport;
 
     m_window->color(m_state->tilemap->background);
     m_renderPasses.bind(RenderMode::Color);
-    m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+    glViewport(0, 0, FULL_HD[0], FULL_HD[1]);
+    m_renderPasses.clear(RenderMode::Color, Color(100, 100, 100));
 
     Debug::ENABLED = m_state->params.debugRender;
 
     auto shader = getShader(TEXT_SHADER.name);
     shader->use();
 
+    //Rect viewport = m_camera.getViewport();
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("view", Mat4::Identity());
 
@@ -180,7 +204,7 @@ void Renderer::onUpdate(double dt) {
     m_state->tilemap->render(TileMode::Color, shader);
 
     scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
-        health->render(getShader("color"));
+        // health->render(getShader("color"));
     });
 
     shader->setMat4("model", Mat4::Identity());
@@ -202,10 +226,12 @@ void Renderer::onUpdate(double dt) {
         emitter->render(shader);
     });
 
+    Rect viewport = m_state->aspectRatio.getViewport(m_window->size().cast<float>());
+
     shader = getShader(TEXT_BUFFER_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size()[0], 0, m_window->size()[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("textColor", Color::white());
 
@@ -217,20 +243,24 @@ void Renderer::onUpdate(double dt) {
     shader = getShader("color");
     shader->use();
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size()[0], 0, m_window->size()[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
     runtime->console()->render();
 
     m_renderPasses.render(RenderMode::Color, 1);
 
+    m_renderPasses.unbind(RenderMode::Color);
+    glViewport(0, 0, m_window->size()[0], m_window->size()[1]);
+
     shader = getShader(TEXTURE_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size()[0], 0, m_window->size()[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
     m_renderPasses.get(RenderMode::Color)->texture->bind();
+    m_mesh.update(&m_quad);
     m_mesh.render();
 
     Profiler::End();
@@ -241,7 +271,9 @@ void Renderer::setCameraPosition(Vec3 pos) {
 }
 
 hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
-    return m_camera.getGamePos(rawMousePos);
+    Rect viewport = m_state->aspectRatio.getViewport(m_window->size().cast<float>());
+    Vec2 relMousePos = (rawMousePos - viewport.pos) * (m_state->metersPerViewport / viewport.size[1]);
+    return m_camera.getGamePos(relMousePos);
 }
 
 void Renderer::onAfterUpdate() {

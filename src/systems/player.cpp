@@ -31,10 +31,10 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(64, 64), 500);
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
 
     auto rect = player->addComponent<hg::math::components::RectCollider>();
-    rect->rect = Rect(Vec2(-32, -32), Vec2(64, 64));
+    rect->rect = Rect(Vec2(-32, -32), Vec2(1, 1));
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
@@ -121,7 +121,7 @@ void Player::onUpdate(double dt) {
 
     renderer->setLaserPointer(laserRay.origin, laserHit.resize<3>());
 
-    renderer->setCrossHair(m_mousePos, 10, 15);
+    renderer->setCrossHair(m_mousePos, 0.5, 0.8);
 
     auto actor = player->getComponent<Actor>();
 
@@ -146,10 +146,11 @@ void Player::ui() {
     auto controller = player->getComponent<hg::TopDownPlayerController>();
     auto actor = player->getComponent<Actor>();
     auto health = player->getComponent<HealthBar>();
+    ImGui::Text(("Mouse: " + m_mousePos.toString()).c_str());
     ImGui::Text(("Velocity: " + controller->velocity().toString()).c_str());
-    ImGui::SliderFloat("Acceleration", &controller->acceleration, 0, 10000);
-    ImGui::SliderFloat("Deacceleration", &controller->deacceleration, 0, 10000);
-    ImGui::SliderFloat("Max Speed", &controller->maxSpeed, 0, 10000);
+    ImGui::SliderFloat("Acceleration", &controller->acceleration, 0, 100);
+    ImGui::SliderFloat("Deacceleration", &controller->deacceleration, 0, 100);
+    ImGui::SliderFloat("Max Speed", &controller->maxSpeed, 0, 100);
     ImGui::SliderFloat("Health", &actor->health, 0, 100);
     health->health = actor->health;
 }
@@ -198,7 +199,6 @@ void Player::onFixedUpdate(double dt) {
         if (!item) {
             continue;
         }
-        std::cout << item->item->tag << "\n";
     }
 
     renderer->setCameraPosition(player->transform.position);
