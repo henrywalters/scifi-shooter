@@ -28,7 +28,8 @@ Renderer::Renderer(Window* window, GameState* state):
         m_mesh(&m_quad),
         m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
         m_window(window),
-        m_laserDisc(3, 10)
+        m_laserDisc(3, 10),
+        m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
 {
     m_quad.centered(false);
     m_mesh.update(&m_quad);
@@ -53,6 +54,7 @@ void Renderer::onInit() {
     m_camera.size = GAME_SIZE.copy().cast<float>();
     m_camera.centered = true;
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
+    m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
 
     m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
 
@@ -79,6 +81,9 @@ void Renderer::onBeforeUpdate() {
     m_window->color(m_state->tilemap->background);
     m_renderPasses.bind(RenderMode::Color);
     m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+
+    m_renderPasses.bind(RenderMode::Lighting);
+    m_renderPasses.clear(RenderMode::Color, Color::black());
 
     Debug::ENABLED = m_state->params.debugRender;
 
@@ -225,14 +230,69 @@ void Renderer::onUpdate(double dt) {
 
     m_renderPasses.render(RenderMode::Color, 1);
 
+    //m_renderPasses.bind(RenderMode::Lighting);
+
+    /*
+
+    std::vector<float> light;
+    light.resize(GAME_SIZE[0] * GAME_SIZE[1]);
+
+    hg::Vec2i cellSize = hg::Vec2i(50, 50);
+    hg::Vec2i cells = GAME_SIZE.div(cellSize);
+
+    Profiler::Start("Lighting");
+
+    for (int i = 0; i < cells.x(); i++) {
+        for (int j = 0; j < cells.y(); j++) {
+
+            int h = i * cellSize[0];
+            int v = j * cellSize[1];
+
+            hg::Vec3 camPos = m_camera.getGamePos(Vec2(h, v)).resize<3>();
+            hg::Vec3 playerPos = scene->getSystem<Player>()->player->position();
+            math::Ray ray(camPos, playerPos - camPos);
+            float t;
+            auto hit = m_state->tilemap->raycast(0, ray, t);
+            if (!hit.has_value()) {
+                float mag = ray.direction.magnitude();
+                float atten = 500.0 / (mag);
+                for (int x = -cellSize[0]; x <= cellSize[0]; x++) {
+                    for (int y = -cellSize[1]; y <= cellSize[1]; y++) {
+                        int h2 = h + x;
+                        int v2 = v + y;
+                        if (h2 < 0 || h2 >= GAME_SIZE[0] || v2 < 0 || v2 >= GAME_SIZE[1]) continue;
+                        light[v2 * GAME_SIZE[0] + h2] = atten;
+                    }
+                }
+            }
+
+        }
+    }
+
+
+     */
+    //Profiler::End("Lighting");
+
+    //m_renderPasses.get(RenderMode::Lighting)->texture->update(GAME_SIZE, light.data());
+    // m_renderPasses.render(RenderMode::Lighting, 1);
+
+    //m_lightTexture.update(GAME_SIZE, light.data());
+
     shader = getShader(TEXTURE_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
+    glActiveTexture(GL_TEXTURE0 + 0);
     m_renderPasses.get(RenderMode::Color)->texture->bind();
+
+    glActiveTexture(GL_TEXTURE0 + 1);
+    m_lightTexture.bind();
+
     m_mesh.render();
+
+    glActiveTexture(GL_TEXTURE0 + 0);
 
     Profiler::End();
 }

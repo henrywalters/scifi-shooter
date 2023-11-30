@@ -31,6 +31,7 @@
 
 enum class RenderMode {
     Color,
+    Lighting,
 };
 
 class Renderer : public hg::System {
@@ -59,6 +60,8 @@ public:
     void setWindowSize(hg::Vec2i size);
 
 private:
+
+    hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
 
     hg::graphics::Window* m_window;
     GameState* m_state;
