@@ -12,7 +12,6 @@
 #include <hagame/graphics/shaders/texture.h>
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
-#include <hagame/math/lineIntersection.h>
 #include <hagame/graphics/resolution.h>
 #include "../runtime.h"
 #include "../components/item.h"
@@ -57,12 +56,13 @@ void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
     m_camera.size = GAME_SIZE.copy().cast<float>();
     m_camera.centered = true;
+
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
     m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
+    m_renderPasses.create(RenderMode::Debug, GAME_SIZE);
+    m_renderPasses.create(RenderMode::UI, GAME_SIZE);
 
     m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
-
-    // m_window->setMouseVisible(false);
 
     auto colorShader = getShader("color");
     auto textShader = getShader(TEXT_SHADER.name);
@@ -83,11 +83,11 @@ void Renderer::onBeforeUpdate() {
     m_camera.zoom = m_state->zoom;
 
     m_window->color(m_state->tilemap->background);
-    m_renderPasses.bind(RenderMode::Color);
-    m_renderPasses.clear(RenderMode::Color, Color(0.5f, 0.5f, 0.5f));
 
-    m_renderPasses.bind(RenderMode::Lighting);
+    m_renderPasses.clear(RenderMode::Color, Color(0.5f, 0.5f, 0.5f));
     m_renderPasses.clear(RenderMode::Lighting, Color::black());
+    m_renderPasses.clear(RenderMode::Debug, Color::black());
+    m_renderPasses.clear(RenderMode::UI, Color::black());
 
     m_renderPasses.bind(RenderMode::Color);
 
@@ -101,204 +101,36 @@ void Renderer::onBeforeUpdate() {
 
     shader = getShader("color");
     shader->use();
-    shader->setFloat("useLighting", 0.0);
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
 }
 
 void Renderer::onUpdate(double dt) {
-    Profiler::Start();
 
     m_window->setVSync(m_state->params.vsync);
 
-    Runtime* runtime = (Runtime*) scene;
+    Profiler::Start();
 
-    auto player = scene->getSystem<Player>();
-    auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
+    Profiler::Start("Color Pass");
+    colorPass(dt);
+    Profiler::End("Color Pass");
 
-    if (weapon) {
-        if (m_weapon.text() != weapon->settings.name) {
-            m_weapon.text(weapon->settings.name);
-        }
+    Profiler::Start("Light Pass");
+    lightPass(dt);
+    Profiler::End("Light Pass");
 
-        std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
-        if (m_ammo.text() != ammoText) {
-            m_ammo.text(ammoText);
-        }
-    }
+    Profiler::Start("Debug Pass");
+    debugPass(dt);
+    Profiler::End("Debug Pass");
 
-    std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
-    if (enemyText != m_enemies.text()) {
-        m_enemies.text(enemyText);
-    }
+    Profiler::Start("UI Pass");
+    uiPass(dt);
+    Profiler::End("UI Pass");
 
-    std::string waveText = "Wave " + std::to_string(m_state->wave);
-    if (m_wave.text() != waveText) {
-        m_wave.text(waveText);
-    }
-
-    int pIndex = 0;
-    for (const auto& poly : m_state->levelGeometry) {
-        Color color = m_state->randomColorsLUT[pIndex++ % m_state->randomColorsLUT.size()];
-        for (const auto& edge : poly) {
-            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2);
-        }
-    }
-
-    /*
-    m_state->tilemap->getLayer(0)->forEach([&](Vec2i index, Tile tile){
-        auto pos = m_state->tilemap->getPos(index);
-        auto size = m_state->tilemap->tileSize();
-        Rect rect(pos, size);
-        Debug::DrawRect(rect, Color::red());
-    });
-     */
-
-    auto shader = getShader(TEXTURE_SHADER.name);
-    shader->use();
-    shader->setFloat("useLighting", 0.0);
-    shader->setMat4("projection", m_camera.projection());
-    shader->setMat4("view", m_camera.view());
-
-    scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
-        shader->setMat4("model", entity->model());
-        getTexture(sprite->texture)->bind();
-        sprite->mesh()->render();
-    });
-
-    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto sprites, auto entity) {
-        sprites->update(dt);
-        shader->setMat4("model", entity->model());
-        SpriteSheet* sheet = (SpriteSheet*) sprites->player->get();
-        if (!sheet) {
-            return;
-        }
-        auto rect = sheet->getRect();
-        sprites->quad->texOffset(rect.pos);
-        sprites->quad->texSize(rect.size);
-        sprites->mesh()->update(sprites->quad.get());
-        sheet->texture()->bind();
-        sprites->mesh()->render();
-    });
-
-    scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
-        Vec3 dir = actor->direction.resize<3>().normalized();
-        Vec3 a = math::Quaternion<float>(actor->fov * -0.5, Vec3::Face()).rotatePoint(dir);
-        Vec3 b = math::Quaternion<float>(actor->fov * 0.5, Vec3::Face()).rotatePoint(dir);
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + dir * 100), Color::blue());
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + a * 100), Color::blue());
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + b * 100), Color::blue());
-    });
-
-    scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
-        Debug::DrawRect(Rect(coll->rect.pos + entity->position().resize<2>(), coll->rect.size), Color::blue());
-    });
-
-    scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
-        Vec2 pos = entity->transform.position.resize<2>();
-        Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
-    });
-
-    shader = getShader("color");
-    shader->use();
-    shader->setFloat("useLighting", 0.0);
-    shader->setMat4("projection", m_camera.projection());
-    shader->setMat4("view", m_camera.view());
-
-    m_state->tilemap->render(TileMode::Color, shader);
-
-    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
-        health->render(getShader("color"));
-    });
-
-    shader->setMat4("model", Mat4::Identity());
-    shader->setVec4("color", Color::red());
-    m_laserMesh->render();
-    m_laserDiscMesh->render();
-
-    for (int i = 0; i < 4; i++) {
-        m_crossHairMeshes[i]->render();
-    }
-
-    shader = getShader(PARTICLE_SHADER.name);
-    shader->use();
-    shader->setMat4("projection", m_camera.projection());
-    shader->setMat4("view", m_camera.view());
-    shader->setMat4("model", Mat4::Identity());
-
-    scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
-        emitter->render(shader);
-    });
-
-    shader = getShader(TEXT_BUFFER_SHADER.name);
-    shader->use();
-    shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
-    shader->setMat4("model", Mat4::Identity());
-    shader->setVec4("textColor", Color::white());
-
-    m_wave.render();
-    m_weapon.render();
-    m_ammo.render();
-    m_enemies.render();
-
-    shader = getShader("color");
-    shader->use();
-    shader->setFloat("useLighting", 0.0);
-    shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
-    shader->setMat4("model", Mat4::Identity());
-
-    runtime->console()->render();
-
-    shader = getShader("color");
-    shader->use();
-
-    shader->setMat4("projection", m_camera.projection());
-    shader->setMat4("view", m_camera.view());
-    Debug::Render();
-
-    m_renderPasses.render(RenderMode::Color, 1);
-
-    m_renderPasses.bind(RenderMode::Lighting);
-
-    shader = getShader("light");
-    shader->use();
-    shader->setMat4("view", m_camera.view());
-    shader->setMat4("projection", m_camera.projection());
-    shader->setMat4("model", Mat4::Identity());
-
-    scene->entities.forEach<LightComponent>([&](LightComponent* light, Entity* entity) {
-        shader->setVec2("origin", entity->transform.position.resize<2>());
-        shader->setVec4("color", light->color);
-        shader->setFloat("attenuation", light->attenuation);
-
-        if (light->dynamic || light->triangles.vertices.size() == 0) {
-            light->computeMesh(m_state->levelGeometry);
-        }
-
-        light->mesh.render();
-    });
-
-    m_renderPasses.render(RenderMode::Lighting, 1);
-
-    shader = getShader(TEXTURE_SHADER.name);
-    shader->use();
-    shader->setFloat("useLighting", 1.0);
-    shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
-    shader->setMat4("model", Mat4::Identity());
-
-    glActiveTexture(GL_TEXTURE0 + 0);
-    m_renderPasses.get(RenderMode::Color)->texture->bind();
-
-    glActiveTexture(GL_TEXTURE0 + 1);
-    m_renderPasses.get(RenderMode::Lighting)->texture->bind();
-
-    m_mesh.render();
-
-    glActiveTexture(GL_TEXTURE0 + 0);
+    Profiler::Start("Combined Pass");
+    combinedPass(dt);
+    Profiler::End("Combined Pass");
 
     Profiler::End();
 }
@@ -359,6 +191,213 @@ void Renderer::setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius) 
     for (int i = 0; i < 4; i++) {
         m_crossHairMeshes[i]->update(&m_crossHairQuads[i]);
     }
+}
+
+void Renderer::colorPass(double dt) {
+
+    m_renderPasses.bind(RenderMode::Color);
+
+    int pIndex = 0;
+    for (const auto& poly : m_state->levelGeometry) {
+        Color color = m_state->randomColorsLUT[pIndex++ % m_state->randomColorsLUT.size()];
+        for (const auto& edge : poly) {
+            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2);
+        }
+    }
+
+    auto shader = getShader(TEXTURE_SHADER.name);
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
+        shader->setMat4("model", entity->model());
+        getTexture(sprite->texture)->bind();
+        sprite->mesh()->render();
+    });
+
+    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto sprites, auto entity) {
+        sprites->update(dt);
+        shader->setMat4("model", entity->model());
+        SpriteSheet* sheet = (SpriteSheet*) sprites->player->get();
+        if (!sheet) {
+            return;
+        }
+        auto rect = sheet->getRect();
+        sprites->quad->texOffset(rect.pos);
+        sprites->quad->texSize(rect.size);
+        sprites->mesh()->update(sprites->quad.get());
+        sheet->texture()->bind();
+        sprites->mesh()->render();
+    });
+
+    scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
+        Vec3 dir = actor->direction.resize<3>().normalized();
+        Vec3 a = math::Quaternion<float>(actor->fov * -0.5, Vec3::Face()).rotatePoint(dir);
+        Vec3 b = math::Quaternion<float>(actor->fov * 0.5, Vec3::Face()).rotatePoint(dir);
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + dir * 100), Color::blue());
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + a * 100), Color::blue());
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + b * 100), Color::blue());
+    });
+
+    scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
+        Debug::DrawRect(Rect(coll->rect.pos + entity->position().resize<2>(), coll->rect.size), Color::blue());
+    });
+
+    scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
+        Vec2 pos = entity->transform.position.resize<2>();
+        Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
+    });
+
+    shader = getShader("color");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    m_state->tilemap->render(TileMode::Color, shader);
+
+    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
+        health->render(getShader("color"));
+    });
+
+    shader = getShader(PARTICLE_SHADER.name);
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+    shader->setMat4("model", Mat4::Identity());
+
+    scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
+        emitter->render(shader);
+    });
+
+    m_renderPasses.render(RenderMode::Color, 1);
+}
+
+void Renderer::lightPass(double dt) {
+    m_renderPasses.bind(RenderMode::Lighting);
+
+    auto shader = getShader("light");
+    shader->use();
+    shader->setMat4("view", m_camera.view());
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("model", Mat4::Identity());
+
+    scene->entities.forEach<LightComponent>([&](LightComponent* light, Entity* entity) {
+        shader->setVec2("origin", entity->transform.position.resize<2>());
+        shader->setVec4("color", light->color);
+        shader->setFloat("attenuation", light->attenuation);
+
+        if (light->dynamic || light->triangles.vertices.size() == 0) {
+            light->computeMesh(m_state->levelGeometry);
+        }
+
+        light->mesh.render();
+    });
+
+    m_renderPasses.render(RenderMode::Lighting, 1);
+}
+
+void Renderer::debugPass(double dt) {
+
+    m_renderPasses.bind(RenderMode::Debug);
+
+    auto shader = getShader("color");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+    Debug::Render();
+
+    shader = getShader("color");
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+
+    Runtime* runtime = (Runtime*) scene;
+    runtime->console()->render();
+
+    m_renderPasses.render(RenderMode::Debug, 1);
+}
+
+void Renderer::uiPass(double dt) {
+
+    m_renderPasses.bind(RenderMode::UI);
+
+    auto player = scene->getSystem<Player>();
+    auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
+
+    if (weapon) {
+        if (m_weapon.text() != weapon->settings.name) {
+            m_weapon.text(weapon->settings.name);
+        }
+
+        std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
+        if (m_ammo.text() != ammoText) {
+            m_ammo.text(ammoText);
+        }
+    }
+
+    std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
+    if (enemyText != m_enemies.text()) {
+        m_enemies.text(enemyText);
+    }
+
+    std::string waveText = "Wave " + std::to_string(m_state->wave);
+    if (m_wave.text() != waveText) {
+        m_wave.text(waveText);
+    }
+
+    auto shader = getShader("color");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+    shader->setMat4("model", Mat4::Identity());
+    shader->setVec4("color", Color::red());
+
+    m_laserMesh->render();
+    m_laserDiscMesh->render();
+
+    for (int i = 0; i < 4; i++) {
+        m_crossHairMeshes[i]->render();
+    }
+
+    shader = getShader(TEXT_BUFFER_SHADER.name);
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+    shader->setVec4("textColor", Color::white());
+
+    m_wave.render();
+    m_weapon.render();
+    m_ammo.render();
+    m_enemies.render();
+
+    m_renderPasses.render(RenderMode::UI, 1);
+}
+
+void Renderer::combinedPass(double dt) {
+    auto shader = getShader("combined");
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+
+    glActiveTexture(GL_TEXTURE0 + 0);
+    m_renderPasses.get(RenderMode::Color)->texture->bind();
+
+    glActiveTexture(GL_TEXTURE0 + 1);
+    m_renderPasses.get(RenderMode::Lighting)->texture->bind();
+
+    glActiveTexture(GL_TEXTURE0 + 2);
+    m_renderPasses.get(RenderMode::Debug)->texture->bind();
+
+    glActiveTexture(GL_TEXTURE0 + 3);
+    m_renderPasses.get(RenderMode::UI)->texture->bind();
+
+    m_mesh.render();
+
+    glActiveTexture(GL_TEXTURE0 + 0);
 }
 
 

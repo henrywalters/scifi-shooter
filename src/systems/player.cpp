@@ -142,6 +142,15 @@ void Player::onUpdate(double dt) {
         aPlayer->trigger("player/" + weaponName + "/move");
     }
 
+    if (m_window->input.keyboardMouse.mouse.leftPressed) {
+        auto entity = scene->entities.add();
+        auto light = entity->addComponent<LightComponent>();
+        light->color = m_state->randomColor();
+        light->attenuation = 0.01f;
+        light->dynamic = false;
+        entity->transform.position = m_mousePos.resize<3>();
+    }
+
     renderer->setCameraPosition(player->transform.position);
 }
 
@@ -163,15 +172,6 @@ void Player::onFixedUpdate(double dt) {
 
     if (m_state->paused) {
         return;
-    }
-
-    if (m_window->input.keyboardMouse.mouse.left) {
-        auto entity = scene->entities.add();
-        auto light = entity->addComponent<LightComponent>();
-        light->color = m_state->randomColor();
-        light->attenuation = 1.0f;
-        light->dynamic = false;
-        entity->transform.position = m_mousePos.resize<3>();
     }
 
     Items* items = scene->getSystem<Items>();

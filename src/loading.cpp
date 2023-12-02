@@ -36,6 +36,7 @@ void Loading::onInit() {
     loadShader(TEXT_BUFFER_SHADER);
     loadShader(PARTICLE_SHADER);
     loadShader("light", "shaders/light.vert", "shaders/light.frag");
+    loadShader("combined", "shaders/combined.vert", "shaders/combined.frag");
 
     auto defaultFont = hg::loadFont("8bit", hg::ASSET_DIR + "fonts/8bit.ttf");
     defaultFont->fontSize(16);

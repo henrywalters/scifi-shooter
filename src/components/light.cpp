@@ -53,6 +53,9 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
                     if (
                             linesIntersect(origin, origin + directions[i], edge.a, edge.b, hit)
                             ) {
+                        if (hit.collinear() || hit.parallel()) {
+                            continue;
+                        }
                         if (!hasBest || (hit.pos() - origin).magnitudeSq() < distance) {
                             hasBest = true;
                             distance = (hit.pos() - origin).magnitudeSq();

@@ -33,6 +33,8 @@
 enum class RenderMode {
     Color,
     Lighting,
+    Debug,
+    UI,
 };
 
 class Renderer : public hg::System {
@@ -91,6 +93,12 @@ private:
 
     std::array<hg::graphics::primitives::Quad, 4> m_crossHairQuads;
     std::array<std::unique_ptr<hg::graphics::MeshInstance>, 4> m_crossHairMeshes;
+
+    void colorPass(double dt);
+    void lightPass(double dt);
+    void debugPass(double dt);
+    void uiPass(double dt);
+    void combinedPass(double dt);
 };
 
 #endif //SCIFISHOOTER_RENDERER_H
