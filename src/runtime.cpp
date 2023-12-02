@@ -41,11 +41,7 @@ void Runtime::loadLevel(std::string level) {
     m_state->tilemap->load(config);
     m_state->tilemap->zIndex(1);
 
-    auto polygons = m_state->tilemap->decompose(0);
-
-    for (const auto& poly : polygons) {
-        std::cout << poly.size() << "\n";
-    }
+    m_state->levelGeometry = m_state->tilemap->decompose(0);
 
     auto items = getSystem<Items>();
 

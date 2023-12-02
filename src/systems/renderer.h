@@ -14,6 +14,7 @@
 #include <hagame/graphics/camera.h>
 #include <hagame/graphics/renderPasses.h>
 #include <hagame/graphics/primitives/quad.h>
+#include <hagame/graphics/primitives/light.h>
 #include <hagame/graphics/mesh.h>
 #include <hagame/graphics/color.h>
 #include <hagame/graphics/debug.h>
@@ -72,6 +73,9 @@ private:
 
     hg::graphics::primitives::Quad m_quad;
     hg::graphics::MeshInstance m_mesh;
+
+    hg::graphics::primitives::Light m_light;
+    hg::graphics::MeshInstance m_lightMesh;
 
     hg::graphics::Text m_text;
 
