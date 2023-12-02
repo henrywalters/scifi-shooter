@@ -11,7 +11,7 @@
 #define HEADLESS 0 // If true, no window will be opened
 #define USE_IMGUI 1 // If true, IMGUI will be enabled and taken care of in game.cpp
 
-#define RANDOM_SEED 420
+#define RANDOM_SEED 421
 
 const hg::Vec2 TILE_SIZE = hg::Vec2(64, 64);
 

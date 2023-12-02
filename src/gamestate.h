@@ -23,17 +23,25 @@ struct GameState {
     hg::utils::Random random;
     RuntimeParameters params;
     hg::EntityMap2D entityMap;
+    std::vector<hg::math::Polygon> levelGeometry;
     std::unique_ptr<hg::graphics::Tilemap> tilemap;
     hg::utils::Store<std::string, hg::graphics::ParticleEmitterSettings> particles;
+    std::vector<hg::graphics::Color> randomColorsLUT;
 
     GameState(hg::Vec2 tileSize):
             entityMap(tileSize),
             tilemap(std::make_unique<hg::graphics::Tilemap>(tileSize)),
             random(RANDOM_SEED)
-    {}
+    {
+        for (int i = 0; i < 100; i++) {
+            randomColorsLUT.push_back(randomColor());
+        }
+    }
 
     // Generate a random tilemap position, that is unoccupied by a tile
     hg::Vec2 randomTilemapPos();
+
+    hg::graphics::Color randomColor();
 
     // Perform a raycast that takes into consideration the tilemap and the Entity map. If an entity is hit, it will be returned.
     std::optional<hg::Entity*> raycast(hg::math::Ray ray, hg::Vec2& pos, std::vector<hg::Entity*> ignore = {});

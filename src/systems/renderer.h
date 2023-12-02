@@ -14,6 +14,7 @@
 #include <hagame/graphics/camera.h>
 #include <hagame/graphics/renderPasses.h>
 #include <hagame/graphics/primitives/quad.h>
+#include <hagame/graphics/primitives/light.h>
 #include <hagame/graphics/mesh.h>
 #include <hagame/graphics/color.h>
 #include <hagame/graphics/debug.h>
@@ -31,6 +32,7 @@
 
 enum class RenderMode {
     Color,
+    Lighting,
 };
 
 class Renderer : public hg::System {
@@ -60,6 +62,8 @@ public:
 
 private:
 
+    hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
+
     hg::graphics::Window* m_window;
     GameState* m_state;
 
@@ -69,6 +73,9 @@ private:
 
     hg::graphics::primitives::Quad m_quad;
     hg::graphics::MeshInstance m_mesh;
+
+    hg::graphics::primitives::Light m_light;
+    hg::graphics::MeshInstance m_lightMesh;
 
     hg::graphics::Text m_text;
 

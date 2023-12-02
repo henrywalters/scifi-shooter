@@ -12,8 +12,11 @@
 #include <hagame/graphics/shaders/texture.h>
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
+#include <hagame/math/lineIntersection.h>
+#include <hagame/graphics/resolution.h>
 #include "../runtime.h"
 #include "../components/item.h"
+#include "../components/light.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -27,7 +30,10 @@ Renderer::Renderer(Window* window, GameState* state):
         m_mesh(&m_quad),
         m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
         m_window(window),
-        m_laserDisc(3, 10)
+        m_laserDisc(3, 10),
+        m_light({}, Vec3::Zero(), 1000),
+        m_lightMesh(&m_light),
+        m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
 {
     m_quad.centered(false);
     m_mesh.update(&m_quad);
@@ -43,15 +49,16 @@ Renderer::Renderer(Window* window, GameState* state):
 }
 
 void Renderer::setWindowSize(hg::Vec2i size) {
-    m_camera.size = size;
+    m_camera.size = size.cast<float>();
     m_quad.size(size.cast<float>());
 }
 
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
-    m_camera.size = GAME_SIZE;
+    m_camera.size = GAME_SIZE.copy().cast<float>();
     m_camera.centered = true;
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
+    m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
 
     m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
 
@@ -77,7 +84,12 @@ void Renderer::onBeforeUpdate() {
 
     m_window->color(m_state->tilemap->background);
     m_renderPasses.bind(RenderMode::Color);
-    m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+    m_renderPasses.clear(RenderMode::Color, Color(0.5f, 0.5f, 0.5f));
+
+    m_renderPasses.bind(RenderMode::Lighting);
+    m_renderPasses.clear(RenderMode::Lighting, Color::black());
+
+    m_renderPasses.bind(RenderMode::Color);
 
     Debug::ENABLED = m_state->params.debugRender;
 
@@ -89,7 +101,7 @@ void Renderer::onBeforeUpdate() {
 
     shader = getShader("color");
     shader->use();
-
+    shader->setFloat("useLighting", 0.0);
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
@@ -126,9 +138,26 @@ void Renderer::onUpdate(double dt) {
         m_wave.text(waveText);
     }
 
+    int pIndex = 0;
+    for (const auto& poly : m_state->levelGeometry) {
+        Color color = m_state->randomColorsLUT[pIndex++ % m_state->randomColorsLUT.size()];
+        for (const auto& edge : poly) {
+            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2);
+        }
+    }
+
+    /*
+    m_state->tilemap->getLayer(0)->forEach([&](Vec2i index, Tile tile){
+        auto pos = m_state->tilemap->getPos(index);
+        auto size = m_state->tilemap->tileSize();
+        Rect rect(pos, size);
+        Debug::DrawRect(rect, Color::red());
+    });
+     */
 
     auto shader = getShader(TEXTURE_SHADER.name);
     shader->use();
+    shader->setFloat("useLighting", 0.0);
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
@@ -173,7 +202,7 @@ void Renderer::onUpdate(double dt) {
 
     shader = getShader("color");
     shader->use();
-
+    shader->setFloat("useLighting", 0.0);
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
@@ -216,22 +245,60 @@ void Renderer::onUpdate(double dt) {
 
     shader = getShader("color");
     shader->use();
+    shader->setFloat("useLighting", 0.0);
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
     runtime->console()->render();
 
+    shader = getShader("color");
+    shader->use();
+
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+    Debug::Render();
+
     m_renderPasses.render(RenderMode::Color, 1);
+
+    m_renderPasses.bind(RenderMode::Lighting);
+
+    shader = getShader("light");
+    shader->use();
+    shader->setMat4("view", m_camera.view());
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("model", Mat4::Identity());
+
+    scene->entities.forEach<LightComponent>([&](LightComponent* light, Entity* entity) {
+        shader->setVec2("origin", entity->transform.position.resize<2>());
+        shader->setVec4("color", light->color);
+        shader->setFloat("attenuation", light->attenuation);
+
+        if (light->dynamic || light->triangles.vertices.size() == 0) {
+            light->computeMesh(m_state->levelGeometry);
+        }
+
+        light->mesh.render();
+    });
+
+    m_renderPasses.render(RenderMode::Lighting, 1);
 
     shader = getShader(TEXTURE_SHADER.name);
     shader->use();
+    shader->setFloat("useLighting", 1.0);
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
+    glActiveTexture(GL_TEXTURE0 + 0);
     m_renderPasses.get(RenderMode::Color)->texture->bind();
+
+    glActiveTexture(GL_TEXTURE0 + 1);
+    m_renderPasses.get(RenderMode::Lighting)->texture->bind();
+
     m_mesh.render();
+
+    glActiveTexture(GL_TEXTURE0 + 0);
 
     Profiler::End();
 }
@@ -245,7 +312,7 @@ hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
 }
 
 void Renderer::onAfterUpdate() {
-    Debug::Render();
+
 }
 
 void Renderer::onFixedUpdate(double dt) {
