@@ -14,6 +14,7 @@
 #include <hagame/graphics/camera.h>
 #include <hagame/graphics/renderPasses.h>
 #include <hagame/graphics/primitives/quad.h>
+#include <hagame/graphics/primitives/light.h>
 #include <hagame/graphics/mesh.h>
 #include <hagame/graphics/color.h>
 #include <hagame/graphics/debug.h>
@@ -31,7 +32,9 @@
 
 enum class RenderMode {
     Color,
-    Display,
+    Lighting,
+    Debug,
+    UI,
 };
 
 class Renderer : public hg::System {
@@ -61,13 +64,20 @@ public:
 
 private:
 
+    hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
+
     hg::graphics::Window* m_window;
     GameState* m_state;
+
+    float m_aspectRatio;
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
 
     hg::graphics::primitives::Quad m_quad;
     hg::graphics::MeshInstance m_mesh;
+
+    hg::graphics::primitives::Light m_light;
+    hg::graphics::MeshInstance m_lightMesh;
 
     hg::graphics::Text m_text;
 
@@ -83,6 +93,12 @@ private:
 
     std::array<hg::graphics::primitives::Quad, 4> m_crossHairQuads;
     std::array<std::unique_ptr<hg::graphics::MeshInstance>, 4> m_crossHairMeshes;
+
+    void colorPass(double dt);
+    void lightPass(double dt);
+    void debugPass(double dt);
+    void uiPass(double dt);
+    void combinedPass(double dt);
 };
 
 #endif //SCIFISHOOTER_RENDERER_H

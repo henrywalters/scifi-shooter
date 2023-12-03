@@ -5,6 +5,7 @@
 #include <hagame/graphics/debug.h>
 #include <hagame/utils/profiler.h>
 #include <hagame/graphics/components/spriteSheetAnimator.h>
+#include <hagame/utils/profiler.h>
 #include "ai.h"
 #include "actor.h"
 #include "../enemies/behaviors/randomLocation.h"

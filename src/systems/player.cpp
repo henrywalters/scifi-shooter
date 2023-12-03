@@ -9,6 +9,7 @@
 #include <hagame/math/components/rectCollider.h>
 #include <hagame/graphics/components/spriteSheetAnimator.h>
 #include <hagame/graphics/spriteSheet.h>
+#include <hagame/math/lineIntersection.h>
 
 #include "player.h"
 #include "renderer.h"
@@ -19,6 +20,7 @@
 #include "../weapons.h"
 #include "../components/actor.h"
 #include "../components/item.h"
+#include "../components/light.h"
 
 
 using namespace hg;
@@ -31,10 +33,12 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
 
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
     auto rect = player->addComponent<hg::math::components::RectCollider>();
     rect->rect = Rect(Vec2(-32, -32), Vec2(1, 1));
+    player->addComponent<LightComponent>();
+
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
@@ -138,6 +142,10 @@ void Player::onUpdate(double dt) {
     } else if (player->getComponent<TopDownPlayerController>()->velocity().magnitudeSq() > 0) {
         aPlayer->trigger("player/" + weaponName + "/move");
     }
+
+
+
+    renderer->setCameraPosition(player->transform.position);
 }
 
 void Player::ui() {
@@ -160,6 +168,15 @@ void Player::onFixedUpdate(double dt) {
     if (m_state->paused) {
         return;
     }
+
+//    if (m_window->input.keyboardMouse.mouse.left) {
+//        auto entity = scene->entities.add();
+//        auto light = entity->addComponent<LightComponent>();
+//        light->color = m_state->randomColor();
+//        light->attenuation = 4.0f;
+//        light->dynamic = false;
+//        entity->transform.position = m_mousePos.resize<3>();
+//    }
 
     Items* items = scene->getSystem<Items>();
 
@@ -201,6 +218,6 @@ void Player::onFixedUpdate(double dt) {
         }
     }
 
-    renderer->setCameraPosition(player->transform.position);
+
 }
 

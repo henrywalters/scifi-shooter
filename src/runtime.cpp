@@ -41,6 +41,8 @@ void Runtime::loadLevel(std::string level) {
     m_state->tilemap->load(config);
     m_state->tilemap->zIndex(1);
 
+    m_state->levelGeometry = m_state->tilemap->decompose(0);
+
     auto items = getSystem<Items>();
 
     items->spawn(items->get("shotgun"), m_state->randomTilemapPos());

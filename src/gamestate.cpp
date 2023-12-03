@@ -89,3 +89,7 @@ GameState::inVisibleRadius(hg::Vec2 pos, float radius, std::vector<hg::Entity *>
     }
     return entities;
 }
+
+hg::graphics::Color GameState::randomColor() {
+    return hg::graphics::Color(random.integer(0, 255), random.integer(0, 255), random.integer(0, 255));
+}
