@@ -1,0 +1,9 @@
+~Triggers~
+
+[Lever]
+size=64,64
+states=on,off,disabled
+on=props/lever_on.png
+off=props/lever_off.png
+disabled=props/lever_disabled.png
+

@@ -21,7 +21,7 @@ public:
 
     float fov = M_PI * 2;
     hg::graphics::Color color = hg::graphics::Color::white();
-    float attenuation = 0.05f;
+    float attenuation = 0.005f;
     bool dynamic = true;
     hg::graphics::Mesh triangles;
     hg::graphics::MeshInstance mesh;

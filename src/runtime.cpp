@@ -73,7 +73,7 @@ void Runtime::onInit() {
         std::cout << "LOADING PARTICLE: " << parts.name << " (" << file << ")\n";
     }
 
-    loadLevel(hg::ASSET_DIR + "levels/level_1.hgtmp");
+    loadLevel(hg::ASSET_DIR + "levels/level_4.hgtmp");
 
     m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::KeyPressed, [&](auto keyPress) {
         if (keyPress.key == '`') {
