@@ -2,16 +2,16 @@
 // Created by henry on 5/25/23.
 //
 #include "weapons.h"
-#include "runtime.h"
+#include "../scenes/runtime.h"
 
 #include <hagame/graphics/components/particleEmitterComponent.h>
 #include <hagame/common/components/healthBar.h>
 #include <hagame/graphics/components/spriteSheetAnimator.h>
 #include <hagame/utils/random.h>
-#include "components/projectile.h"
-#include "components/explosive.h"
-#include "systems/player.h"
-#include "systems/audio.h"
+#include "../components/projectile.h"
+#include "../components/explosive.h"
+#include "../systems/player.h"
+#include "../systems/audio.h"
 
 void ProjectileWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
     hg::utils::Random rand;

@@ -27,8 +27,8 @@
 
 #include <hagame/utils/profiler.h>
 
-#include "../constants.h"
-#include "../gamestate.h"
+#include "../common/constants.h"
+#include "../common/gamestate.h"
 
 enum class RenderMode {
     Color,

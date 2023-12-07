@@ -11,14 +11,14 @@
 #include <hagame/core/scene.h>
 #include "runtimeParams.h"
 #include "constants.h"
-#include "items.h"
+#include "itemDef.h"
 
 struct GameState {
 
     bool paused = false;
     bool menuOpen = false;
     int wave = 0;
-    float zoom = 1.5f;
+    float zoom = 0.8f;
     hg::Scene* scene;
     hg::utils::Random random;
     RuntimeParameters params;

@@ -4,25 +4,26 @@
 
 #include "imgui.h"
 #include "runtime.h"
-#include "constants.h"
-#include "components/projectile.h"
+#include "../common/constants.h"
+#include "../components/projectile.h"
 
-#include "game.h"
+#include "../game.h"
 
 #include <hagame/core/game.h>
 #include <hagame/utils/profiler.h>
 
-#include "components/ai.h"
+#include "../components/ai.h"
 
-#include "systems/renderer.h"
-#include "systems/player.h"
-#include "systems/enemies.h"
-#include "systems/actors.h"
-#include "systems/weapons.h"
-#include "systems/items.h"
-#include "systems/audio.h"
+#include "../systems/renderer.h"
+#include "../systems/player.h"
+#include "../systems/enemies.h"
+#include "../systems/actors.h"
+#include "../systems/weapons.h"
+#include "../systems/items.h"
+#include "../systems/audio.h"
 
-#include "imgui_node.h"
+#include "../imgui_node.h"
+#include "../systems/props.h"
 
 
 using namespace hg::utils;
@@ -44,12 +45,13 @@ void Runtime::loadLevel(std::string level) {
     m_state->levelGeometry = m_state->tilemap->decompose(0);
 
     auto items = getSystem<Items>();
+    auto props = getSystem<Props>();
 
     items->spawn(items->get("shotgun"), m_state->randomTilemapPos());
 
-    for (int i = 0; i < 15; i++) {
-        items->spawn(items->get("Small Health"), m_state->randomTilemapPos());
-    }
+    items->spawn(items->get("Wrench"), m_state->randomTilemapPos());
+    auto lever = props->spawn(props->get("Lever"), m_state->randomTilemapPos());
+    lever->getComponent<Prop>()->addRequirement("off", "Wrench");
 }
 
 
@@ -62,7 +64,8 @@ void Runtime::onInit() {
     addSystem<Renderer>(m_window, m_state.get());
     addSystem<Enemies>(m_state.get());
     addSystem<Weapons>(m_state.get());
-    addSystem<Items>(m_state.get())->load(MultiConfig::Parse(hg::ASSET_DIR + "items.hg"));
+    addSystem<Items>()->load(MultiConfig::Parse(hg::ASSET_DIR + "items.hg"));
+    addSystem<Props>()->load(MultiConfig::Parse(hg::ASSET_DIR + "props.hg"));
     addSystem<Player>(m_window, m_state.get());
 
     for (const auto& file : d_listFiles(hg::ASSET_DIR + "particles")) {
@@ -214,6 +217,8 @@ void Runtime::renderUI(double dt) {
     ImGui::Checkbox("Debug Render", &m_state->params.debugRender);
     ImGui::Checkbox("Player Invincible", &m_state->params.invincible);
     ImGui::Checkbox("VSync", &m_state->params.vsync);
+
+    m_entityViewer.render(entities.root.get());
 
     /*
 

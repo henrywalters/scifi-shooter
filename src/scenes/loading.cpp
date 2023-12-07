@@ -2,7 +2,7 @@
 // Created by henry on 11/9/23.
 //
 #include "loading.h"
-#include "systems/renderer.h"
+#include "../systems/renderer.h"
 #include "runtime.h"
 #include <hagame/core/game.h>
 #include <hagame/graphics/shaders/text.h>

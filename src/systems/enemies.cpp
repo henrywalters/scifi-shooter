@@ -9,10 +9,10 @@
 #include <hagame/graphics/components/spriteSheetAnimator.h>
 #include "enemies.h"
 
-#include "../utils.h"
+#include "../common/utils.h"
 #include "../components/ai.h"
 #include "player.h"
-#include "../constants.h"
+#include "../common/constants.h"
 #include "../components/actor.h"
 #include "../enemies/behaviors/tags.h"
 

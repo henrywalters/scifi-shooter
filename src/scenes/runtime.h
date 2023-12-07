@@ -18,11 +18,14 @@
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/textBuffer.h>
 #include <hagame/audio/player.h>
-#include "components/actor.h"
 
-#include "constants.h"
-#include "gamestate.h"
-#include "console.h"
+#include "../levelEditor/entityViewer.h"
+
+#include "../components/actor.h"
+
+#include "../common/constants.h"
+#include "../common/gamestate.h"
+#include "../common/console.h"
 
 class Runtime : public hg::Scene {
 public:
@@ -48,6 +51,8 @@ protected:
     void onUpdate(double dt) override;
 
 private:
+
+    EntityViewer m_entityViewer;
 
     hg::audio::Player* m_player;
 

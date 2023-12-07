@@ -19,12 +19,12 @@
 #include <hagame/utils/pathfinding.h>
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/textBuffer.h>
-#include "components/actor.h"
+#include "../components/actor.h"
 
-#include "constants.h"
-#include "gamestate.h"
-#include "console.h"
-#include "systems/renderer.h"
+#include "../common/constants.h"
+#include "../common/gamestate.h"
+#include "../common/console.h"
+#include "../systems/renderer.h"
 
 class Loading : public hg::Scene {
 public:

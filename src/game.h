@@ -6,7 +6,7 @@
 #define HGAMETEMPLATE_GAME_H
 
 #include <hagame/core/game.h>
-#include "constants.h"
+#include "common/constants.h"
 #include <hagame/audio/player.h>
 
 class Game : public hg::Game {

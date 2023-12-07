@@ -6,12 +6,13 @@
 #define SCIFISHOOTER_ITEM_H
 
 #include <hagame/core/component.h>
-#include "../items.h"
+#include "../common/itemDef.h"
 
 class Item : public hg::Component {
 public:
 
-    ItemDef* item;
+    ItemDef* def;
+    hg::Entity* owner;
 
 protected:
 

@@ -5,7 +5,7 @@
 #ifndef SCIFISHOOTER_ENEMYSTATE_H
 #define SCIFISHOOTER_ENEMYSTATE_H
 
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 struct EnemyState {
     GameState* game;

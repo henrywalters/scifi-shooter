@@ -16,12 +16,12 @@
 #include "items.h"
 #include "audio.h"
 
-#include "../utils.h"
-#include "../weapons.h"
+#include "../common/utils.h"
+#include "../common/weapons.h"
 #include "../components/actor.h"
 #include "../components/item.h"
 #include "../components/light.h"
-
+#include "props.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -142,6 +142,15 @@ void Player::onUpdate(double dt) {
         aPlayer->trigger("player/" + weaponName + "/move");
     }
 
+    Props* props = scene->getSystem<Props>();
+    auto propsInRange = props->getWithinRadius(player->transform.position.resize<2>(), INTERACT_DISTANCE);
+
+    if (m_window->input.keyboardMouse.mouse.leftPressed) {
+        std::cout << "E PRESSED\n";
+        for (const auto& prop : propsInRange) {
+            prop->getComponent<Prop>()->toggle((hg::Entity*) player->getChildByName("Inventory"));
+        }
+    }
 
 
     renderer->setCameraPosition(player->transform.position);
@@ -158,6 +167,7 @@ void Player::ui() {
     ImGui::SliderFloat("Deacceleration", &controller->deacceleration, 0, 10000);
     ImGui::SliderFloat("Max Speed", &controller->maxSpeed, 0, 10000);
     ImGui::SliderFloat("Health", &actor->health, 0, 100);
+
     health->health = actor->health;
 }
 
@@ -178,14 +188,18 @@ void Player::onFixedUpdate(double dt) {
 
     Items* items = scene->getSystem<Items>();
 
-    auto pickUp = items->getItems(player->transform.position.resize<2>(), PICKUP_DISTANCE);
+    auto pickUp = items->getWithinRadius(player->transform.position.resize<2>(), PICKUP_DISTANCE);
 
     for (const auto& item : pickUp) {
         if (std::find(m_pickingUp.begin(), m_pickingUp.end(), item) == m_pickingUp.end()) {
             //m_pickingUp.push_back(item);
-            items->remove(item);
+            //items->remove(item);
+            player->getChildByName("Inventory")->addChild(item);
+            item->transform.position = Vec3::Zero();
         }
     }
+
+    /*
 
     for (const auto &item : m_pickingUp) {
         if (!item) { return; }
@@ -195,6 +209,8 @@ void Player::onFixedUpdate(double dt) {
             items->remove(item);
         }
     }
+
+     */
 
     Renderer* renderer = scene->getSystem<Renderer>();
 
@@ -214,7 +230,7 @@ void Player::onFixedUpdate(double dt) {
         if (!item) {
             continue;
         }
-        std::cout << item->item->tag << "\n";
+        std::cout << item->def->tag << "\n";
     }
 
 

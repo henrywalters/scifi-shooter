@@ -7,7 +7,7 @@
 #include <hagame/common/components/topDownPlayerController.h>
 #include <hagame/common/components/healthBar.h>
 
-#include "components/actor.h"
+#include "../components/actor.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -16,6 +16,10 @@ Entity* AddActor(hg::Scene* scene, hg::Vec3 pos, std::string texture, hg::Vec2 s
     auto entity = scene->entities.add();
 
     auto body = scene->entities.add(entity);
+    body->name = "Body";
+
+    auto inventory = scene->entities.add(entity);
+    inventory->name = "Inventory";
 
     entity->transform.position = pos;
 

@@ -13,7 +13,7 @@
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
 #include <hagame/graphics/resolution.h>
-#include "../runtime.h"
+#include "../scenes/runtime.h"
 #include "../components/item.h"
 #include "../components/light.h"
 
@@ -256,9 +256,9 @@ void Renderer::colorPass(double dt) {
 
     m_state->tilemap->render(TileMode::Color, shader);
 
-    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
-        health->render(getShader("color"));
-    });
+//    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
+//        health->render(getShader("color"));
+//    });
 
     shader = getShader(PARTICLE_SHADER.name);
     shader->use();
@@ -354,8 +354,8 @@ void Renderer::uiPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("color", Color::red());
 
-    m_laserMesh->render();
-    m_laserDiscMesh->render();
+    //m_laserMesh->render();
+    //m_laserDiscMesh->render();
 
     for (int i = 0; i < 4; i++) {
         m_crossHairMeshes[i]->render();
@@ -371,7 +371,7 @@ void Renderer::uiPass(double dt) {
     m_wave.render();
     m_weapon.render();
     m_ammo.render();
-    m_enemies.render();
+    // m_enemies.render();
 
     m_renderPasses.render(RenderMode::UI, 1);
 }

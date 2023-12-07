@@ -1,7 +1,7 @@
 //
 // Created by henry on 10/31/23.
 //
-#include "items.h"
+#include "itemDef.h"
 
 void WeaponItemDef::loadItem(hg::utils::Config config) {
     auto wepType = config.getRaw(tag, "weaponType");
@@ -43,4 +43,8 @@ void AmmoItemDef::loadItem(hg::utils::Config config) {
 
 void HealthItemDef::loadItem(hg::utils::Config config) {
     restores = config.get<int>(tag, "restores");
+}
+
+void PropRequirementDef::loadItem(hg::utils::Config config) {
+
 }

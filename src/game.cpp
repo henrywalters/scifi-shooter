@@ -11,8 +11,8 @@
 #include <hagame/audio/player.h>
 
 #include "game.h"
-#include "runtime.h"
-#include "loading.h"
+#include "scenes/runtime.h"
+#include "scenes/loading.h"
 
 #if USE_IMGUI
 #include "imgui.h"

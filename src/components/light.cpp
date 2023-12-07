@@ -28,7 +28,7 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         Vec2 deltaB = b - origin;
         float thetaA = std::atan2(deltaA.y(), deltaA.x());
         float thetaB = std::atan2(deltaB.y(), deltaB.x());
-        return thetaA <= thetaB;
+        return thetaA < thetaB;
     });
 
     std::vector<std::array<Vec2, 3>> endpoints;
@@ -39,8 +39,8 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         std::array<Vec2, 3> directions;
         std::array<Vec2, 3> hits;
         directions[1] = pt - origin;
-        directions[0] = rotate(directions[1].normalized(), -0.001) * 10000;
-        directions[2] = rotate(directions[1].normalized(), 0.001) * 10000;
+        directions[0] = rotate(directions[1].normalized(), -0.00001) * 10000;
+        directions[2] = rotate(directions[1].normalized(), 0.00001) * 10000;
 
         for (int i = 0; i < directions.size(); i++) {
             Vec2 bestPt;

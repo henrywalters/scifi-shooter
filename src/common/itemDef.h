@@ -2,27 +2,30 @@
 // Created by henry on 10/31/23.
 //
 
-#ifndef SCIFISHOOTER_ITEMS_H
-#define SCIFISHOOTER_ITEMS_H
+#ifndef SCIFISHOOTER_ITEMDEF_H
+#define SCIFISHOOTER_ITEMDEF_H
 
 #include <hagame/utils/config.h>
 #include <hagame/utils/store.h>
 #include <hagame/common/weapons.h>
 #include <hagame/core/object.h>
+#include "worldObjectDef.h"
 
 enum class ItemType {
     Weapon,
     Ammo,
     Health,
+    PropRequirement,
 };
 
 const std::vector<std::string> ITEM_TYPE_NAMES = {
     "Weapon",
     "Ammo",
     "Health",
+    "PropRequirement",
 };
 
-class ItemDef {
+class ItemDef : public WorldObjectDef {
 public:
     std::string tag;
     ItemType type;
@@ -46,6 +49,13 @@ const std::vector<std::string> WEAPON_TYPE_NAMES = {
         "Rocket",
         "Raycast",
         "Custom",
+};
+
+class PropRequirementDef : public ItemDef {
+public:
+
+    void loadItem(hg::utils::Config config);
+
 };
 
 class WeaponItemDef : public ItemDef {
@@ -83,4 +93,4 @@ public:
 
 };
 
-#endif //SCIFISHOOTER_ITEMS_H
+#endif //SCIFISHOOTER_ITEMDEF_H
