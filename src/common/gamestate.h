@@ -9,6 +9,8 @@
 #include <hagame/graphics/tilemap.h>
 #include <hagame/graphics/particleEmitter.h>
 #include <hagame/core/scene.h>
+#include <hagame/core/game.h>
+#include <hagame/structures/graph.h>
 #include "runtimeParams.h"
 #include "constants.h"
 #include "itemDef.h"
@@ -28,6 +30,8 @@ struct GameState {
     hg::utils::Store<std::string, hg::graphics::ParticleEmitterSettings> particles;
     std::vector<hg::graphics::Color> randomColorsLUT;
 
+    std::string parentScene;
+
     GameState(hg::Vec2 tileSize):
             entityMap(tileSize),
             tilemap(std::make_unique<hg::graphics::Tilemap>(tileSize)),
@@ -37,6 +41,8 @@ struct GameState {
             randomColorsLUT.push_back(randomColor());
         }
     }
+
+    void gotoScene(hg::Game* game, std::string next);
 
     // Generate a random tilemap position, that is unoccupied by a tile
     hg::Vec2 randomTilemapPos();

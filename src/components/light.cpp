@@ -36,6 +36,7 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
     int pointIdx = 0;
 
     for (const auto& pt : points) {
+
         std::array<Vec2, 3> directions;
         std::array<Vec2, 3> hits;
         directions[1] = pt - origin;

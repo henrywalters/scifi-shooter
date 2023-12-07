@@ -4,6 +4,7 @@
 #include "loading.h"
 #include "../systems/renderer.h"
 #include "runtime.h"
+#include "mainMenu.h"
 #include <hagame/core/game.h>
 #include <hagame/graphics/shaders/text.h>
 #include <hagame/graphics/shaders/color.h>
@@ -19,10 +20,15 @@ Loading::Loading(Window *window):
         m_state(std::make_unique<GameState>(TILE_SIZE)),
         hg::Scene(),
         m_quad(window->size().cast<float>(), Vec2(0, 0), true),
-        m_mesh(&m_quad)
+        m_mesh(&m_quad),
+        m_logoQuad(Vec2(HD[0] / 2, HD[0] / 8), Vec2(HD[0] / 2, HD[1] / 2)),
+        m_logo(&m_logoQuad)
 {
     m_quad.centered(false);
     m_mesh.update(&m_quad);
+
+    m_logoQuad.centered();
+    m_logo.update(&m_logoQuad);
 }
 
 
@@ -38,10 +44,14 @@ void Loading::onInit() {
     loadShader("light", "shaders/light.vert", "shaders/light.frag");
     loadShader("combined", "shaders/combined.vert", "shaders/combined.frag");
 
+    loadTexture("logo", "textures/hg_studio.png");
+
     auto defaultFont = hg::loadFont("8bit", hg::ASSET_DIR + "fonts/8bit.ttf");
     defaultFont->fontSize(16);
 
-    m_messageBuffer = TextBuffer(defaultFont.get(), "", Vec3(m_window->size().x() / 2 - 100, m_window->size().y() / 2, 0), TextHAlignment::Left);
+    m_messageBuffer = TextBuffer(defaultFont.get(), "", Vec3(0, 0, 0), TextHAlignment::Left);
+    m_versionBuffer = TextBuffer(defaultFont.get(), "", Vec3(0, m_window->size().y() - 16, 0), TextHAlignment::Left);
+    m_versionBuffer.text(BUILD_TAG);
 
     for (const auto& file : d_listFiles(ASSET_DIR + "audio", true)) {
         auto parts = f_getParts(file);
@@ -66,7 +76,7 @@ void Loading::onUpdate(double dt) {
 
     m_window->color(m_state->tilemap->background);
     m_renderPasses.bind(RenderMode::Color);
-    m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+    m_renderPasses.clear(RenderMode::Color, Color(70, 70, 70));
 
     if (m_spriteSheetIdx < m_spriteSheets.size()) {
         auto &[name, path] = m_spriteSheets[m_spriteSheetIdx++];
@@ -82,13 +92,11 @@ void Loading::onUpdate(double dt) {
         hg::loadAudioStream(name, path);
     } else {
         m_message = "Initializing";
-        game()->scenes()->add<Runtime>("runtime", m_window);
-        game()->scenes()->activate("runtime");
+        //game()->scenes()->add<Runtime>("runtime", m_window);
+        //m_state->gotoScene(game(), "runtime");
+        game()->scenes()->add<MainMenu>("main_menu", m_window);
+        m_state->gotoScene(game(), "main_menu");
     }
-
-    std::cout << m_message << "\n";
-
-    float percent = (float) (m_shaderIdx + m_spriteSheetIdx + m_textureIdx) / (m_shaders.size() + m_spriteSheets.size() + m_textures.size());
 
     auto shader = getShader(TEXT_BUFFER_SHADER.name);
 
@@ -101,9 +109,20 @@ void Loading::onUpdate(double dt) {
     m_messageBuffer.text(m_message);
     m_messageBuffer.render();
 
-    m_renderPasses.render(RenderMode::Color, 1);
+    m_versionBuffer.render();
 
     shader = getShader(TEXTURE_SHADER.name);
+    shader->use();
+    shader->setMat4("view", Mat4::Identity());
+    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("model", Mat4::Identity());
+    shader->setVec4("textColor", Color::white());
+
+    getTexture("logo")->bind();
+    m_logo.render();
+
+    m_renderPasses.render(RenderMode::Color, 1);
+
     shader->use();
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));

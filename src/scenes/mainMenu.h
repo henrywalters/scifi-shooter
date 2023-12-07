@@ -1,9 +1,9 @@
 //
-// Created by henry on 11/9/23.
+// Created by henry on 12/6/23.
 //
 
-#ifndef SCIFISHOOTER_LOADING_H
-#define SCIFISHOOTER_LOADING_H
+#ifndef SCIFISHOOTER_MAINMENU_H
+#define SCIFISHOOTER_MAINMENU_H
 
 #include <future>
 
@@ -19,6 +19,8 @@
 #include <hagame/utils/pathfinding.h>
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/textBuffer.h>
+#include <hagame/ui/elements/textButton.h>
+
 #include "../components/actor.h"
 
 #include "../common/constants.h"
@@ -26,10 +28,10 @@
 #include "../common/console.h"
 #include "../systems/renderer.h"
 
-class Loading : public hg::Scene {
+class MainMenu : public hg::Scene {
 public:
 
-    Loading(hg::graphics::Window* window);
+    MainMenu(hg::graphics::Window* window);
 
 protected:
 
@@ -38,35 +40,28 @@ protected:
 
 private:
 
-    int m_shaderIdx = 0;
-    int m_spriteSheetIdx = 0;
-    int m_textureIdx = 0;
-    int m_soundIdx = 0;
-
-    std::string m_message;
+    struct MenuButton {
+        hg::ui::TextButton button;
+        std::string scene;
+    };
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
     hg::graphics::primitives::Quad m_quad;
     hg::graphics::MeshInstance m_mesh;
 
-    hg::graphics::TextBuffer m_messageBuffer;
-    hg::graphics::TextBuffer m_versionBuffer;
+    std::vector<MenuButton> m_buttons;
 
-    hg::graphics::primitives::Quad m_logoQuad;
-    hg::graphics::MeshInstance m_logo;
+    hg::graphics::TextBuffer m_versionBuffer;
 
     std::shared_ptr<GameState> m_state;
 
-    std::vector<hg::graphics::ShaderSource> m_shaders;
-    std::vector<std::tuple<std::string, std::string>> m_spriteSheets;
-    std::vector<std::tuple<std::string, std::string>> m_textures;
-    std::vector<std::tuple<std::string, std::string>> m_sounds;
-
     hg::graphics::Window* m_window;
+
+    std::string m_hovering;
+    bool m_isHovering;
 
     void render(double dt);
 
 };
 
-
-#endif //SCIFISHOOTER_LOADING_H
+#endif //SCIFISHOOTER_MAINMENU_H

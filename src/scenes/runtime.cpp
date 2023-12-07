@@ -24,6 +24,7 @@
 
 #include "../imgui_node.h"
 #include "../systems/props.h"
+#include "../components/light.h"
 
 
 using namespace hg::utils;
@@ -46,8 +47,6 @@ void Runtime::loadLevel(std::string level) {
 
     auto items = getSystem<Items>();
     auto props = getSystem<Props>();
-
-    items->spawn(items->get("shotgun"), m_state->randomTilemapPos());
 
     items->spawn(items->get("Wrench"), m_state->randomTilemapPos());
     auto lever = props->spawn(props->get("Lever"), m_state->randomTilemapPos());
@@ -181,8 +180,6 @@ void Runtime::onFixedUpdate(double dt) {
 
 void Runtime::onUpdate(double dt) {
 
-    Debug::DrawCircle(0, 0, 100, Color::blue());
-
     renderUI(dt);
     render(dt);
     Profiler::Render();
@@ -201,7 +198,7 @@ void Runtime::setSize(hg::Vec2i size) {
 
 void Runtime::renderUI(double dt) {
 
-    Profiler::Start();
+    Profiler::Start("Runtime::renderUI");
 
     ImGui::Begin("Runtime Settings");
     ImGui::Text(("FPS: " + std::to_string(1.0f / dt)).c_str());
@@ -239,7 +236,7 @@ void Runtime::renderUI(double dt) {
     //bool open;
     //ShowExampleAppCustomNodeGraph(&open);
 
-    Profiler::End();
+    Profiler::End("Runtime::renderUI");
 }
 
 void Runtime::render(double dt) {

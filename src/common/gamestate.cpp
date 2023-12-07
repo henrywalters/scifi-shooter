@@ -93,3 +93,12 @@ GameState::inVisibleRadius(hg::Vec2 pos, float radius, std::vector<hg::Entity *>
 hg::graphics::Color GameState::randomColor() {
     return hg::graphics::Color(random.integer(0, 255), random.integer(0, 255), random.integer(0, 255));
 }
+
+void GameState::gotoScene(hg::Game* game, std::string next) {
+    if (game->scenes()->activeName().has_value()) {
+        parentScene = game->scenes()->activeName().value();
+    } else {
+        parentScene = "";
+    }
+    game->scenes()->activate(next);
+}

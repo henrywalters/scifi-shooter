@@ -44,9 +44,12 @@ void main() {
         col += sampleTex[i] * kernel[i];
 
     float min_light = 0.1f;
+    float min_color = 0.15f;
     vec4 light_lb = vec4(min_light, min_light, min_light, 1.0);
+    vec4 color_lb = vec4(min_color, min_color, min_color, 1.0);
 
     vec4 color = texture(colorTex, TexCoord);
+    color = min(max(vec4(color.rgb, 1.0f), color_lb), vec4(1.0f));
     vec4 light = min(max(vec4(col.rgb, 1.0f), light_lb), vec4(1.0));
     vec4 debug = texture(debugTex, TexCoord);
     vec4 ui = texture(uiTex, TexCoord);

@@ -84,7 +84,7 @@ void Renderer::onBeforeUpdate() {
 
     m_window->color(m_state->tilemap->background);
 
-    m_renderPasses.clear(RenderMode::Color, Color(0.5f, 0.5f, 0.5f));
+    m_renderPasses.clear(RenderMode::Color, Color::white());
     m_renderPasses.clear(RenderMode::Lighting, Color::black());
     m_renderPasses.clear(RenderMode::Debug, Color::black());
     m_renderPasses.clear(RenderMode::UI, Color::black());
@@ -110,7 +110,7 @@ void Renderer::onUpdate(double dt) {
 
     m_window->setVSync(m_state->params.vsync);
 
-    Profiler::Start();
+    Profiler::Start("Renderer");
 
     Profiler::Start("Color Pass");
     colorPass(dt);
@@ -132,7 +132,7 @@ void Renderer::onUpdate(double dt) {
     combinedPass(dt);
     Profiler::End("Combined Pass");
 
-    Profiler::End();
+    Profiler::End("Renderer");
 }
 
 void Renderer::setCameraPosition(Vec3 pos) {
@@ -287,7 +287,7 @@ void Renderer::lightPass(double dt) {
         shader->setVec4("color", light->color);
         shader->setFloat("attenuation", light->attenuation);
 
-        if (light->dynamic || light->triangles.vertices.size() == 0) {
+        if (light->dynamic || light->mesh.size() == 0) {
             light->computeMesh(m_state->levelGeometry);
         }
 
@@ -377,6 +377,9 @@ void Renderer::uiPass(double dt) {
 }
 
 void Renderer::combinedPass(double dt) {
+
+    m_renderPasses.unbind(RenderMode::UI);
+
     auto shader = getShader("combined");
     shader->use();
     shader->setMat4("view", Mat4::Identity());

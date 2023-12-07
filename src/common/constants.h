@@ -8,6 +8,8 @@
 #define GAME_NAME "SCIFI SHOOTER"
 #define GAME_SIZE hg::graphics::HD
 
+#define BUILD_TAG "build 0.1"
+
 #define HEADLESS 0 // If true, no window will be opened
 #define USE_IMGUI 1 // If true, IMGUI will be enabled and taken care of in game.cpp
 

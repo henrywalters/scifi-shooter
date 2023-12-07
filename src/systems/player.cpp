@@ -102,6 +102,8 @@ void Player::onInit() {
 
 void Player::onUpdate(double dt) {
 
+    utils::Profiler::Start("Player::onUpdate");
+
     if (m_state->paused) {
         return;
     }
@@ -154,6 +156,8 @@ void Player::onUpdate(double dt) {
 
 
     renderer->setCameraPosition(player->transform.position);
+
+    utils::Profiler::End("Player::onUpdate");
 }
 
 void Player::ui() {
@@ -177,15 +181,6 @@ void Player::onFixedUpdate(double dt) {
         return;
     }
 
-//    if (m_window->input.keyboardMouse.mouse.left) {
-//        auto entity = scene->entities.add();
-//        auto light = entity->addComponent<LightComponent>();
-//        light->color = m_state->randomColor();
-//        light->attenuation = 0.5f;
-//        light->dynamic = false;
-//        entity->transform.position = m_mousePos.resize<3>();
-//    }
-
     Items* items = scene->getSystem<Items>();
 
     auto pickUp = items->getWithinRadius(player->transform.position.resize<2>(), PICKUP_DISTANCE);
@@ -198,19 +193,6 @@ void Player::onFixedUpdate(double dt) {
             item->transform.position = Vec3::Zero();
         }
     }
-
-    /*
-
-    for (const auto &item : m_pickingUp) {
-        if (!item) { return; }
-        item->transform.position += (player->position() - item->position()).normalized() * PICKUP_SPEED * dt;
-        if ((item->position() - player->position()).magnitude() < 50) {
-            m_pickingUp.erase(std::find(m_pickingUp.begin(), m_pickingUp.end(), item));
-            items->remove(item);
-        }
-    }
-
-     */
 
     Renderer* renderer = scene->getSystem<Renderer>();
 
