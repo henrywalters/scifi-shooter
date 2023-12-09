@@ -16,6 +16,7 @@
 #include "../scenes/runtime.h"
 #include "../components/item.h"
 #include "../components/light.h"
+#include "../scifiGame.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -23,16 +24,17 @@ using namespace hg::utils;
 using namespace hg::math::collisions;
 using namespace hg::math::components;
 
-Renderer::Renderer(Window* window, GameState* state):
-        m_state(state),
-        m_quad(window->size().cast<float>(), Vec2(0, 0), true),
-        m_mesh(&m_quad),
-        m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
-        m_window(window),
-        m_laserDisc(3, 10),
-        m_light({}, Vec3::Zero(), 1000),
-        m_lightMesh(&m_light),
-        m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
+Renderer::Renderer(Window* window, GameState* state, bool editorMode):
+    m_editorMode(editorMode),
+    m_state(state),
+    m_quad(window->size().cast<float>(), Vec2(0, 0), true),
+    m_mesh(&m_quad),
+    m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
+    m_window(window),
+    m_laserDisc(3, 10),
+    m_light({}, Vec3::Zero(), 1000),
+    m_lightMesh(&m_light),
+    m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
 {
     m_quad.centered(false);
     m_mesh.update(&m_quad);
@@ -313,8 +315,8 @@ void Renderer::debugPass(double dt) {
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
-    Runtime* runtime = (Runtime*) scene;
-    runtime->console()->render();
+    ScifiGame* game = (ScifiGame*) scene->game();
+    game->console->render();
 
     m_renderPasses.render(RenderMode::Debug, 1);
 }
@@ -322,6 +324,10 @@ void Renderer::debugPass(double dt) {
 void Renderer::uiPass(double dt) {
 
     m_renderPasses.bind(RenderMode::UI);
+
+    if (m_editorMode) {
+        return;
+    }
 
     auto player = scene->getSystem<Player>();
     auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();

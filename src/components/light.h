@@ -23,6 +23,7 @@ public:
     hg::graphics::Color color = hg::graphics::Color::white();
     float attenuation = 0.005f;
     bool dynamic = true;
+
     hg::graphics::Mesh triangles;
     hg::graphics::MeshInstance mesh;
 
@@ -30,7 +31,15 @@ public:
     void computeMesh(std::vector<hg::math::Polygon> geometry);
 
 protected:
-    OBJECT_NAME(LightComponent);
+
+    OBJECT_NAME(LightComponent)
+
 };
+
+HG_COMPONENT(Graphics, LightComponent)
+HG_FIELD(LightComponent, float, attenuation)
+HG_FIELD(LightComponent, float, fov)
+HG_FIELD(LightComponent, bool, dynamic)
+HG_FIELD(LightComponent, hg::graphics::Color, color)
 
 #endif //SCIFISHOOTER_LIGHT_H

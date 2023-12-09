@@ -36,6 +36,13 @@ public:
     bool alive() const {
         return health > 0;
     }
+
+protected:
+
+    OBJECT_NAME(Actor)
+
 };
+
+HG_COMPONENT(Core, Actor)
 
 #endif //SCIFISHOOTER_ACTOR_H

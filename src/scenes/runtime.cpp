@@ -7,7 +7,7 @@
 #include "../common/constants.h"
 #include "../components/projectile.h"
 
-#include "../game.h"
+#include "../scifiGame.h"
 
 #include <hagame/core/game.h>
 #include <hagame/utils/profiler.h>

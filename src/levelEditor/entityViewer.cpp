@@ -11,15 +11,35 @@ void EntityViewer::render(hg::Entity *root) {
 }
 
 void EntityViewer::renderEntity(hg::Entity *entity) {
-    ImGui::Text(entity->name.c_str());
+    ImGui::SeparatorText(entity->name.c_str());
+    ImGui::InputText("Name", entity->name.data(), 500);
+
+    if (entity->name.c_str() == "") {
+        entity->name = "Entity<" + std::to_string(entity->id()) + ">";
+    }
+
     ImGui::DragFloat3("Position", entity->transform.position.vector);
     ImGui::DragFloat4("Rotation", entity->transform.rotation.vector);
     ImGui::DragFloat3("Scale", entity->transform.scale.vector);
 
+    if (ImGui::Button("Add Component")) {
+        ImGui::OpenPopup(COMPONENT_EXPLORER.c_str());
+    }
+
+    auto addComponent = componentExplorer();
+    if (addComponent.has_value()) {
+        hg::ComponentFactory::Attach(entity, addComponent.value());
+    }
+
     if (entity->components().size() > 0) {
-        ImGui::Text("Components");
+        ImGui::SeparatorText("Components");
         for (const auto& component : entity->components()) {
             ImGui::Text(component->operator std::string().c_str());
+            for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
+                if (editComponentField(component, field)) {
+                    std::cout << "Field: " << field.field << " updated\n";
+                }
+            }
         }
     }
 }
@@ -46,6 +66,7 @@ void EntityViewer::renderTree(hg::Entity* entity) {
     }
 
     if (open) {
+
         for (const auto& child : entity->children()) {
             renderTree((hg::Entity*)child);
         }

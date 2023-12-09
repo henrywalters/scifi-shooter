@@ -7,6 +7,7 @@
 
 #include <hagame/core/entity.h>
 #include "imgui.h"
+#include "componentExplorer.h"
 
 class EntityViewer {
 public:

@@ -45,7 +45,7 @@ public:
 
     hg::graphics::OrthographicCamera m_camera;
 
-    Renderer(hg::graphics::Window* window, GameState* state);
+    Renderer(hg::graphics::Window* window, GameState* state, bool editorMode = false);
 
     void onInit() override;
 
@@ -63,6 +63,8 @@ public:
     void setWindowSize(hg::Vec2i size);
 
 private:
+
+    bool m_editorMode;
 
     hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
 

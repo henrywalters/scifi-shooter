@@ -3,14 +3,9 @@
 //
 
 #include <hagame/graphics/windows.h>
-#include <hagame/core/assets.h>
-#include <hagame/graphics/shaders/text.h>
-#include <hagame/audio/device.h>
-#include <hagame/audio/stream.h>
 #include <hagame/audio/source.h>
-#include <hagame/audio/player.h>
 
-#include "game.h"
+#include "scifiGame.h"
 #include "scenes/runtime.h"
 #include "scenes/loading.h"
 
@@ -42,7 +37,7 @@ void generateSineWave(ALsizei numSamples, ALsizei channels, ALsizei bitDepth, AL
     }
 }
 
-void Game::onInit() {
+void ScifiGame::onInit() {
 #if !HEADLESS
     m_window = Windows::Create(GAME_NAME, m_size);
 
@@ -51,7 +46,7 @@ void Game::onInit() {
     });
 
     Windows::Events.subscribe(WindowEvents::Resize, [&](Window* window) {
-        scenes()->get<Runtime>("runtime")->setSize(window->size());
+        // scenes()->get<Runtime>("runtime")->setSize(window->size());
     });
 #endif
 
@@ -71,7 +66,7 @@ void Game::onInit() {
 
 }
 
-void Game::onBeforeUpdate() {
+void ScifiGame::onBeforeUpdate() {
 #if !HEADLESS
     m_window->clear();
 #endif
@@ -83,7 +78,7 @@ void Game::onBeforeUpdate() {
 #endif
 }
 
-void Game::onAfterUpdate() {
+void ScifiGame::onAfterUpdate() {
 #if USE_IMGUI
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -94,10 +89,10 @@ void Game::onAfterUpdate() {
 #endif
 }
 
-void Game::onDestroy() {
+void ScifiGame::onDestroy() {
     // CLEAN UP
 }
 
-void Game::onUpdate(double dt) {
+void ScifiGame::onUpdate(double dt) {
 
 }

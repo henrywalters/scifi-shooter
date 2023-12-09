@@ -7,17 +7,20 @@
 
 #include <hagame/core/game.h>
 #include "common/constants.h"
+#include "common/console.h"
 #include <hagame/audio/player.h>
 
-class Game : public hg::Game {
+class ScifiGame : public hg::Game {
 public:
+
+    std::unique_ptr<Console> console;
 
 #if HEADLESS
     Game(std::string name):
         hg::Game(name)
     {}
 #else
-    Game(std::string name, hg::Vec2i size):
+    ScifiGame(std::string name, hg::Vec2i size):
         m_size(size),
         hg::Game(name)
     {}

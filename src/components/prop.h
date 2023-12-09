@@ -65,4 +65,6 @@ protected:
 
 };
 
+HG_COMPONENT(Core, Prop)
+
 #endif //SCIFISHOOTER_PROP_H
