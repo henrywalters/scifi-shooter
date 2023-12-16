@@ -35,10 +35,13 @@ void entityViewer(hg::Entity* entity) {
         ImGui::SeparatorText("Components");
         for (const auto& component : entity->components()) {
             ImGui::Text(component->operator std::string().c_str());
+            int index = 0;
             for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
+                ImGui::PushID(index++);
                 if (editComponentField(component, field)) {
                     std::cout << "Field: " << field.field << " updated\n";
                 }
+                ImGui::PopID();
             }
         }
     }

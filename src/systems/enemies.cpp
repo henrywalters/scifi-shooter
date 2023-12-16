@@ -61,7 +61,7 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
     entity->addComponent<AI>(type, m_state->tilemap.get(), m_state);
 
     auto coll = entity->addComponent<hg::math::components::CircleCollider>();
-    coll->circle.radius = def.size.magnitude() * 0.5;
+    coll->radius = def.size.magnitude() * 0.5;
 
     m_enemies.push_back(entity);
 

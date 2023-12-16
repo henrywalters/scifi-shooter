@@ -36,8 +36,8 @@ void Player::spawn(hg::Vec2 pos) {
     player = AddActor(scene, Vec3::Zero(), "player", Vec2(64, 64), 500);
     player->addComponent<LightComponent>();
     auto rect = player->addComponent<hg::math::components::RectCollider>();
-
-    rect->rect = Rect(Vec2(-32, -32), Vec2(64, 64));
+    rect->pos = Vec2(-32, -32);
+    rect->size = Vec2(64, 64);
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);

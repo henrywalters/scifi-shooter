@@ -6,7 +6,7 @@
 #define HGAMETEMPLATE_CONSTANTS_H
 
 #define GAME_NAME "SCIFI SHOOTER"
-#define GAME_SIZE hg::graphics::HD
+#define GAME_SIZE hg::graphics::FULL_HD
 
 #define BUILD_TAG "build 0.1"
 

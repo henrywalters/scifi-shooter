@@ -23,6 +23,7 @@
 #include "../levelEditor/entityTree.h"
 #include "../levelEditor/entityViewer.h"
 #include "../levelEditor/fileBrowser.h"
+#include "../levelEditor/assetBrowser.h"
 
 #include "../components/actor.h"
 
@@ -66,9 +67,10 @@ private:
     std::vector<std::unique_ptr<Tool>> m_tools;
     Tool* m_tool = nullptr;
 
-    std::unique_ptr<hg::CppScriptManager> m_scripts;
+    hg::CppLibraryWrapper* m_scripts;
 
     FileBrowser m_browser;
+    AssetBrowser m_assets;
 
     std::string m_saveFile = "";
 
@@ -77,6 +79,7 @@ private:
     void renderEntityWindow(double dt);
     void renderSelectedEntityWindow(double dt);
     void renderScriptWindow(double dt);
+    void renderAssetWindow(double dt);
 
     void reset();
     void saveAs();

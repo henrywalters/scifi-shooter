@@ -34,7 +34,8 @@ void LevelEditor::onInit() {
         e.target->addChild(e.entity);
     });
 
-    m_scripts = std::make_unique<CppScriptManager>("/home/henry/development/games/scifi-shooter/cmake-build-debug/libscripts.so");
+    m_scripts = CppLibraryManager::Register("/home/henry/development/games/scifi-shooter/cmake-build-debug/libscripts.so");
+
     auto script_paths = hg::utils::d_listFiles(ASSET_DIR + "scripts");
 
     for (const auto path : script_paths) {
@@ -156,6 +157,7 @@ void LevelEditor::renderUI(double dt) {
     renderEntityWindow(dt);
     renderScriptWindow(dt);
     renderSelectedEntityWindow(dt);
+    renderAssetWindow(dt);
 
     m_browser.render();
 }
@@ -191,22 +193,30 @@ void LevelEditor::renderScriptWindow(double dt) {
         m_scripts->reload();
     }
 
-    /*
-    for (const auto& script : m_activeScripts) {
-        ImGui::Text(script->def.name.c_str());
+
+    for (const auto& script : scripts()) {
+        ImGui::Text(script->getDef().name.c_str());
         ImGui::SameLine();
         if (ImGui::Button("Remove")) {
-            m_activeScripts.erase(std::find(m_activeScripts.begin(), m_activeScripts.end(), script));
+            removeScript(script.get());
         }
-    }*/
+    }
 
-    auto newScript = scriptExplorer(m_scripts.get());
+    auto newScript = scriptExplorer();
 
     if (newScript.has_value()) {
         auto script = m_scripts->get(newScript.value().name);
         auto cppScript = this->addScript<CppScript>(script);
         cppScript->init();
     }
+
+    ImGui::End();
+}
+
+void LevelEditor::renderAssetWindow(double dt) {
+    ImGui::Begin("Assets");
+
+    m_assets.render();
 
     ImGui::End();
 }
@@ -249,3 +259,4 @@ void LevelEditor::loadFromDisc() {
         load(config);
     }, {LEVEL_EXT});
 }
+

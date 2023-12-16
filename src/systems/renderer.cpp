@@ -302,12 +302,12 @@ void Renderer::colorPass(double dt) {
     });
 
     scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
-        Debug::DrawRect(Rect(coll->rect.pos + entity->position().resize<2>(), coll->rect.size), Color::blue());
+        Debug::DrawRect(Rect(coll->pos + entity->position().resize<2>(), coll->size), Color::blue());
     });
 
     scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
         Vec2 pos = entity->transform.position.resize<2>();
-        Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
+        Debug::DrawCircle(pos[0] + coll->pos[0], pos[1] + coll->pos[1], coll->radius, Color::blue());
     });
 
     shader = getShader("color");

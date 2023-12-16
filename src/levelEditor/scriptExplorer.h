@@ -10,6 +10,6 @@
 
 const std::string SCRIPT_EXPLORER = "script_explorer";
 
-std::optional<hg::ScriptDef> scriptExplorer(hg::CppScriptManager* manager);
+std::optional<hg::ScriptDef> scriptExplorer();
 
 #endif //SCIFISHOOTER_SCRIPTEXPLORER_H
