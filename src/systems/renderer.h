@@ -22,13 +22,14 @@
 #include <hagame/graphics/components/particleEmitterComponent.h>
 #include <hagame/graphics/tilemap.h>
 #include <hagame/graphics/textBuffer.h>
+#include <hagame/graphics/batchRenderer.h>
 
 #include <hagame/common/components/healthBar.h>
 
 #include <hagame/utils/profiler.h>
 
-#include "../constants.h"
-#include "../gamestate.h"
+#include "../common/constants.h"
+#include "../common/gamestate.h"
 
 enum class RenderMode {
     Color,
@@ -45,7 +46,7 @@ public:
 
     hg::graphics::OrthographicCamera m_camera;
 
-    Renderer(hg::graphics::Window* window, GameState* state);
+    Renderer(hg::graphics::Window* window, GameState* state, bool editorMode = false);
 
     void onInit() override;
 
@@ -64,7 +65,15 @@ public:
 
 private:
 
+    bool m_editorMode;
+
     hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
+
+    //std::unique_ptr<hg::graphics::VertexBuffer<hg::graphics::Quad>> m_quadBuffer;
+    //hg::graphics::primitives::Quad m_quad;
+    //hg::graphics::MeshInstance m_quadMesh;
+
+    hg::graphics::BatchRenderer m_batchRenderer;
 
     hg::graphics::Window* m_window;
     GameState* m_state;
@@ -73,7 +82,7 @@ private:
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
 
-    hg::graphics::primitives::Quad m_quad;
+    hg::graphics::primitives::Quad m_displayQuad;
     hg::graphics::MeshInstance m_mesh;
 
     hg::graphics::primitives::Light m_light;

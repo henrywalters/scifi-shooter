@@ -10,7 +10,7 @@
 #include <hagame/core/scene.h>
 #include <hagame/core/entityMap.h>
 #include <hagame/graphics/tilemap.h>
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 class Weapons : public hg::System {
 public:

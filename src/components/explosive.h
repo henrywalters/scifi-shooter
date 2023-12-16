@@ -8,7 +8,7 @@
 #include <hagame/core/component.h>
 #include <hagame/core/scene.h>
 #include <hagame/graphics/debug.h>
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 class Explosive : public hg::Component {
 public:

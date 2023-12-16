@@ -10,11 +10,20 @@ using namespace hg::math;
 using namespace hg::graphics;
 
 void LightComponent::computeMesh(std::vector<Polygon> geometry) {
+
+    if (geometry.size() == 0) { // If there is nothing to worry about, then we can just draw rectangle
+        triangles = std::make_shared<primitives::Disc>(50000, 10);
+        mesh.update(triangles.get());
+        return;
+    } else {
+        triangles = std::make_shared<Mesh>();
+    }
+
     Vec2 origin = entity->transform.position.resize<2>();
     std::vector<Vec2> points;
 
-    triangles.vertices.clear();
-    triangles.indices.clear();
+    triangles->vertices.clear();
+    triangles->indices.clear();
 
     for (const auto& poly : geometry) {
         for (const auto& edge : poly) {
@@ -28,7 +37,7 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         Vec2 deltaB = b - origin;
         float thetaA = std::atan2(deltaA.y(), deltaA.x());
         float thetaB = std::atan2(deltaB.y(), deltaB.x());
-        return thetaA <= thetaB;
+        return thetaA < thetaB;
     });
 
     std::vector<std::array<Vec2, 3>> endpoints;
@@ -36,6 +45,7 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
     int pointIdx = 0;
 
     for (const auto& pt : points) {
+
         std::array<Vec2, 3> directions;
         std::array<Vec2, 3> hits;
         directions[1] = pt - origin;
@@ -80,8 +90,8 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         Vec2 p2 = endpoints[i % endpoints.size()][0];
         hg::graphics::Triangle tri(p1.resize<3>(), origin.resize<3>(), p2.resize<3>());
 
-        tri.insert(triangles.vertices, triangles.indices);
+        tri.insert(triangles->vertices, triangles->indices);
     }
 
-    mesh.update(&triangles);
+    mesh.update(triangles.get());
 }

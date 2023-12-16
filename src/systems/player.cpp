@@ -16,12 +16,12 @@
 #include "items.h"
 #include "audio.h"
 
-#include "../utils.h"
-#include "../weapons.h"
+#include "../common/utils.h"
+#include "../common/weapons.h"
 #include "../components/actor.h"
 #include "../components/item.h"
 #include "../components/light.h"
-
+#include "props.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -33,12 +33,11 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
-    auto rect = player->addComponent<hg::math::components::RectCollider>();
-    rect->rect = Rect(Vec2(-32, -32), Vec2(1, 1));
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(64, 64), 500);
     player->addComponent<LightComponent>();
-
+    auto rect = player->addComponent<hg::math::components::RectCollider>();
+    rect->pos = Vec2(-0.5, -0.5);
+    rect->size = Vec2(1, 1);
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
@@ -103,6 +102,8 @@ void Player::onInit() {
 
 void Player::onUpdate(double dt) {
 
+    utils::Profiler::Start("Player::onUpdate");
+
     if (m_state->paused) {
         return;
     }
@@ -143,9 +144,19 @@ void Player::onUpdate(double dt) {
         aPlayer->trigger("player/" + weaponName + "/move");
     }
 
+    Props* props = scene->getSystem<Props>();
+    auto propsInRange = props->getWithinRadius(player->transform.position.resize<2>(), INTERACT_DISTANCE);
 
+    if (m_window->input.keyboardMouse.mouse.leftPressed) {
+        std::cout << "E PRESSED\n";
+        for (const auto& prop : propsInRange) {
+            prop->getComponent<Prop>()->toggle((hg::Entity*) player->getChildByName("Inventory"));
+        }
+    }
 
     renderer->setCameraPosition(player->transform.position);
+
+    utils::Profiler::End("Player::onUpdate");
 }
 
 void Player::ui() {
@@ -160,6 +171,7 @@ void Player::ui() {
     ImGui::SliderFloat("Deacceleration", &controller->deacceleration, 0, 100);
     ImGui::SliderFloat("Max Speed", &controller->maxSpeed, 0, 100);
     ImGui::SliderFloat("Health", &actor->health, 0, 100);
+
     health->health = actor->health;
 }
 
@@ -180,21 +192,14 @@ void Player::onFixedUpdate(double dt) {
 
     Items* items = scene->getSystem<Items>();
 
-    auto pickUp = items->getItems(player->transform.position.resize<2>(), PICKUP_DISTANCE);
+    auto pickUp = items->getWithinRadius(player->transform.position.resize<2>(), PICKUP_DISTANCE);
 
     for (const auto& item : pickUp) {
         if (std::find(m_pickingUp.begin(), m_pickingUp.end(), item) == m_pickingUp.end()) {
             //m_pickingUp.push_back(item);
-            items->remove(item);
-        }
-    }
-
-    for (const auto &item : m_pickingUp) {
-        if (!item) { return; }
-        item->transform.position += (player->position() - item->position()).normalized() * PICKUP_SPEED * dt;
-        if ((item->position() - player->position()).magnitude() < 50) {
-            m_pickingUp.erase(std::find(m_pickingUp.begin(), m_pickingUp.end(), item));
-            items->remove(item);
+            //items->remove(item);
+            player->getChildByName("Inventory")->addChild(item);
+            item->transform.position = Vec3::Zero();
         }
     }
 
@@ -216,6 +221,8 @@ void Player::onFixedUpdate(double dt) {
         if (!item) {
             continue;
         }
+
+        std::cout << item->def->tag << "\n";
     }
 
 

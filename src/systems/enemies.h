@@ -10,7 +10,7 @@
 #include <hagame/graphics/tilemap.h>
 
 #include "../enemies/enemy.h"
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 class Enemies : public hg::System {
 public:

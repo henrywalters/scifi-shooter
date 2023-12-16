@@ -49,12 +49,12 @@ Status CanSee::process(double dt, EnemyState *state, data_context_t *ctx) {
             return (a->transform.position - state->entity->transform.position).magnitudeSq() <
                     (b->transform.position - state->entity->transform.position).magnitudeSq();
         });
-        SetData(ctx, (uuid_t)BTags::Target, entities[0]);
+        SetData(ctx, (uuid_t)BTags::Target, (void*)entities[0]);
     } else {
         ctx->erase((uuid_t)BTags::Target);
     }
 
-    SetData(ctx, (uuid_t)BTags::EntitiesInSight, entities);
+    SetData(ctx, (uuid_t)BTags::EntitiesInSight, (void*)entities.data());
 
     return Status::Success;
 }

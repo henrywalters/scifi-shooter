@@ -14,7 +14,7 @@ Status CorrectPath::process(double dt, EnemyState *state, hg::utils::bt::data_co
         return Status::Failure;
     }
 
-    auto target = GetData<Entity*>(ctx, (uuid_t)BTags::Target);
+    auto target = (hg::Entity*)GetData<void*>(ctx, (uuid_t)BTags::Target);
     auto pathEnd = GetData<Vec2>(ctx,(uuid_t)BTags::PathEnd);
 
     if (state->game->tilemap->getIndex(target->transform.position.resize<2>()) != state->game->tilemap->getIndex(pathEnd)) {

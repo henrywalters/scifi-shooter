@@ -9,12 +9,13 @@
 #include <hagame/core/system.h>
 #include <hagame/graphics/window.h>
 #include "weapons.h"
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 class Player : public hg::System {
 public:
 
-    const float PICKUP_DISTANCE = 200;
+    const float PICKUP_DISTANCE = 100;
+    const float INTERACT_DISTANCE = 50;
     const float PICKUP_SPEED = 500;
 
     hg::Entity* player;

@@ -9,10 +9,10 @@
 #include <hagame/graphics/components/spriteSheetAnimator.h>
 #include "enemies.h"
 
-#include "../utils.h"
+#include "../common/utils.h"
 #include "../components/ai.h"
 #include "player.h"
-#include "../constants.h"
+#include "../common/constants.h"
 #include "../components/actor.h"
 #include "../enemies/behaviors/tags.h"
 
@@ -61,7 +61,7 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
     entity->addComponent<AI>(type, m_state->tilemap.get(), m_state);
 
     auto coll = entity->addComponent<hg::math::components::CircleCollider>();
-    coll->circle.radius = def.size.magnitude() * 0.5;
+    coll->radius = def.size.magnitude() * 0.5;
 
     m_enemies.push_back(entity);
 
@@ -107,7 +107,7 @@ void Enemies::renderUI() {
             }
 
             for (auto &[key, value]: *ai->m_behavior->context()) {
-                ImGui::Text(("\t" + BTagNames[key] + " = " + toString(value)).c_str());
+                ImGui::Text(("\t" + BTagNames[key] + " = " + utils::serialize(value)).c_str());
             }
         }
 
