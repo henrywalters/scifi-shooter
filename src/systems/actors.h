@@ -12,7 +12,7 @@
 
 #include <hagame/core/entityMap.h>
 
-#include "../gamestate.h"
+#include "../common/gamestate.h"
 
 class Actors : public hg::System {
 public:

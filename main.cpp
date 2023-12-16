@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include <hagame/core/hg.h>
-#include "src/game.h"
+#include <hagame/graphics/resolution.h>
+#include "src/scifiGame.h"
 
 #include <hagame/structures/binaryHeap.h>
 #include <hagame/utils/timer.h>
@@ -16,7 +17,7 @@
 #if HEADLESS
 Game game(GAME_NAME);
 #else
-Game game(GAME_NAME, GAME_SIZE);
+ScifiGame game(GAME_NAME, GAME_SIZE);
 #endif
 
 void emscripten_tick() {

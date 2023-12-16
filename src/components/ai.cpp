@@ -109,7 +109,7 @@ void AI::onUpdate(double dt) {
 
     hg::utils::Profiler::Start("AI::onUpdate");
 
-    m_size = entity->getComponentInChildren<hg::graphics::components::SpriteSheetAnimator>()->quad->size();
+    // m_size = entity->getComponentInChildren<hg::graphics::components::SpriteSheetAnimator>()->quad->size();
 
     m_dt = dt;
 

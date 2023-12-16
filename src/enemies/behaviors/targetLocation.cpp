@@ -13,7 +13,7 @@ Status TargetLocation::process(double dt, EnemyState *state, data_context_t *ctx
         return Status::Failure;
     }
 
-    SetData(ctx, (uuid_t)BTags::PathEnd, GetData<Entity*>(ctx, (uuid_t)BTags::Target)->transform.position.resize<2>());
+    SetData(ctx, (uuid_t)BTags::PathEnd, ((hg::Entity*)GetData<void*>(ctx, (uuid_t)BTags::Target))->transform.position.resize<2>());
 
     return Status::Success;
 }

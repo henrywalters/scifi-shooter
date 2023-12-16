@@ -13,9 +13,10 @@
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
 #include <hagame/graphics/resolution.h>
-#include "../runtime.h"
+#include "../scenes/runtime.h"
 #include "../components/item.h"
 #include "../components/light.h"
+#include "../scifiGame.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -23,19 +24,23 @@ using namespace hg::utils;
 using namespace hg::math::collisions;
 using namespace hg::math::components;
 
-Renderer::Renderer(Window* window, GameState* state):
-        m_state(state),
-        m_quad(window->size().cast<float>(), Vec2(0, 0), true),
-        m_mesh(&m_quad),
-        m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
-        m_window(window),
-        m_laserDisc(3, 10),
-        m_light({}, Vec3::Zero(), 1000),
-        m_lightMesh(&m_light),
-        m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
+HG_SYSTEM(Graphics, Renderer)
+
+Renderer::Renderer(Window* window, GameState* state, bool editorMode):
+    m_editorMode(editorMode),
+    m_state(state),
+    m_displayQuad(window->size().cast<float>(), Vec2(0, 0), true),
+    m_mesh(&m_displayQuad),
+    m_laser(primitives::Line({Vec3::Zero(), Vec3::Zero()})),
+    m_window(window),
+    m_laserDisc(3, 10),
+    m_light({}, Vec3::Zero(), 1000),
+    m_lightMesh(&m_light),
+    //m_quadMesh(&m_quad),
+    m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
 {
-    m_quad.centered(false);
-    m_mesh.update(&m_quad);
+    m_displayQuad.centered(false);
+    m_mesh.update(&m_displayQuad);
 
     m_laserMesh = std::make_unique<MeshInstance>(&m_laser);
     m_laserDiscMesh = std::make_unique<MeshInstance>(&m_laserDisc);
@@ -49,13 +54,27 @@ Renderer::Renderer(Window* window, GameState* state):
 
 void Renderer::setWindowSize(hg::Vec2i size) {
     m_camera.size = size.cast<float>();
-    m_quad.size(size.cast<float>());
+    m_displayQuad.size(size.cast<float>());
 }
 
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
     m_camera.size = GAME_SIZE.copy().cast<float>();
     m_camera.centered = true;
+
+    /*
+    m_quad.size(hg::Vec2(1.0, 1.0));
+    m_quad.centered(true);
+    m_quadMesh.update(&m_quad);
+
+    m_quadBuffer = VertexBuffer<Quad>::Dynamic(0);
+    auto vao = m_quadMesh.getVAO();
+    vao->bind();
+    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 3, 2, offsetof(Quad, size));
+    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 4, 2, offsetof(Quad, offset));
+    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 5, 4, offsetof(Quad, color));
+    vao->setInstanced(3, 5);
+     */
 
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
     m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
@@ -84,7 +103,7 @@ void Renderer::onBeforeUpdate() {
 
     m_window->color(m_state->tilemap->background);
 
-    m_renderPasses.clear(RenderMode::Color, Color(0.5f, 0.5f, 0.5f));
+    m_renderPasses.clear(RenderMode::Color, Color::black());
     m_renderPasses.clear(RenderMode::Lighting, Color::black());
     m_renderPasses.clear(RenderMode::Debug, Color::black());
     m_renderPasses.clear(RenderMode::UI, Color::black());
@@ -110,7 +129,7 @@ void Renderer::onUpdate(double dt) {
 
     m_window->setVSync(m_state->params.vsync);
 
-    Profiler::Start();
+    Profiler::Start("Renderer");
 
     Profiler::Start("Color Pass");
     colorPass(dt);
@@ -132,7 +151,7 @@ void Renderer::onUpdate(double dt) {
     combinedPass(dt);
     Profiler::End("Combined Pass");
 
-    Profiler::End();
+    Profiler::End("Renderer");
 }
 
 void Renderer::setCameraPosition(Vec3 pos) {
@@ -210,6 +229,46 @@ void Renderer::colorPass(double dt) {
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
+    m_batchRenderer.quads.clear();
+    m_batchRenderer.sprites.clear();
+
+    //std::vector<Quad> quads;
+
+    scene->entities.forEach<Quad>([&](auto quad, auto entity) {
+        //quads.push_back(*quad);
+        m_batchRenderer.quads.batch(entity, quad);
+    });
+
+    scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
+        m_batchRenderer.sprites.batch(entity, sprite);
+    });
+
+    //m_quadBuffer->bind();
+    //m_quadBuffer->resize(quads.size());
+    //m_quadBuffer->update(0, quads);
+
+    //m_quadMesh.getVAO()->bind();
+
+    shader = getShader("batch_color");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    m_batchRenderer.quads.render();
+
+    shader = getShader("batch_texture");
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    m_batchRenderer.sprites.render();
+
+    //glDrawArraysInstanced(GL_TRIANGLES, 0, m_quadMesh.size(), quads.size());
+
+    //m_quadBuffer->unbind();
+
+    /*
+
     scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
         shader->setMat4("model", entity->model());
         getTexture(sprite->texture)->bind();
@@ -231,6 +290,8 @@ void Renderer::colorPass(double dt) {
         sprites->mesh()->render();
     });
 
+     */
+
     scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
         Vec3 dir = actor->direction.resize<3>().normalized();
         Vec3 a = math::Quaternion<float>(actor->fov * -0.5, Vec3::Face()).rotatePoint(dir);
@@ -241,12 +302,12 @@ void Renderer::colorPass(double dt) {
     });
 
     scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
-        Debug::DrawRect(Rect(coll->rect.pos + entity->position().resize<2>(), coll->rect.size), Color::blue());
+        Debug::DrawRect(Rect(coll->pos + entity->position().resize<2>(), coll->size), Color::blue());
     });
 
     scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
         Vec2 pos = entity->transform.position.resize<2>();
-        Debug::DrawCircle(pos[0], pos[1], coll->circle.radius, Color::blue());
+        Debug::DrawCircle(pos[0] + coll->pos[0], pos[1] + coll->pos[1], coll->radius, Color::blue());
     });
 
     shader = getShader("color");
@@ -256,9 +317,9 @@ void Renderer::colorPass(double dt) {
 
     m_state->tilemap->render(TileMode::Color, shader);
 
-    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
-        health->render(getShader("color"));
-    });
+//    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
+//        health->render(getShader("color"));
+//    });
 
     shader = getShader(PARTICLE_SHADER.name);
     shader->use();
@@ -283,11 +344,11 @@ void Renderer::lightPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
 
     scene->entities.forEach<LightComponent>([&](LightComponent* light, Entity* entity) {
-        shader->setVec2("origin", entity->transform.position.resize<2>());
+        shader->setVec2("origin", entity->position().resize<2>());
         shader->setVec4("color", light->color);
         shader->setFloat("attenuation", light->attenuation);
 
-        if (light->dynamic || light->triangles.vertices.size() == 0) {
+        if (light->dynamic || light->mesh.size() == 0) {
             light->computeMesh(m_state->levelGeometry);
         }
 
@@ -313,8 +374,8 @@ void Renderer::debugPass(double dt) {
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
-    Runtime* runtime = (Runtime*) scene;
-    runtime->console()->render();
+    ScifiGame* game = (ScifiGame*) scene->game();
+    game->console->render();
 
     m_renderPasses.render(RenderMode::Debug, 1);
 }
@@ -322,6 +383,10 @@ void Renderer::debugPass(double dt) {
 void Renderer::uiPass(double dt) {
 
     m_renderPasses.bind(RenderMode::UI);
+
+    if (m_editorMode) {
+        return;
+    }
 
     auto player = scene->getSystem<Player>();
     auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
@@ -354,8 +419,8 @@ void Renderer::uiPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("color", Color::red());
 
-    m_laserMesh->render();
-    m_laserDiscMesh->render();
+    //m_laserMesh->render();
+    //m_laserDiscMesh->render();
 
     for (int i = 0; i < 4; i++) {
         m_crossHairMeshes[i]->render();
@@ -371,14 +436,18 @@ void Renderer::uiPass(double dt) {
     m_wave.render();
     m_weapon.render();
     m_ammo.render();
-    m_enemies.render();
+    // m_enemies.render();
 
     m_renderPasses.render(RenderMode::UI, 1);
 }
 
 void Renderer::combinedPass(double dt) {
+
+    m_renderPasses.unbind(RenderMode::UI);
+
     auto shader = getShader("combined");
     shader->use();
+    shader->setFloat("useLighting", m_state->useLighting ? 1.0 : 0.0);
     shader->setMat4("view", Mat4::Identity());
     shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
     shader->setMat4("model", Mat4::Identity());

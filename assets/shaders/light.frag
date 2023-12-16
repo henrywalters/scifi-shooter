@@ -9,14 +9,13 @@ in vec2 Origin;
 in vec2 LightPos;
 in float Attenuation;
 
-uniform sampler2D image;
-
 out vec4 FragColor;
 
 void main() {
-
     float d = length(LightPos - Origin);
     float light = clamp(1.0 / (1.0 + Attenuation * d), 0.0, 1.0);
-    FragColor = vec4(Color.rgb, light);
+    if (light > 0.01) {
+        FragColor = vec4(Color.rgb, light);
+    }
 
 }

@@ -1,0 +1,18 @@
+~Props~
+
+[Lever]
+size=64,64
+states=on,off,disabled
+default_state=disabled
+on_texture=props/lever_on
+off_texture=props/lever_off
+disabled_texture=props/lever_disabled
+on_collide=1
+off_collide=1
+disabled_collide=1
+on_message=The lever is turned on. It must have triggered something
+off_message=The lever is turned off.
+disabled_message=The lever seems to be broken. I need something to repair it
+disabled_next=off
+off_next=on
+on_next=off

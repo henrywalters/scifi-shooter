@@ -25,7 +25,7 @@ else()
     MESSAGE("UNIX")
     find_library(HAGAME_LIBRARY
             NAMES HaGame
-            PATH_SUFFIXES lib
+            PATH_SUFFIXES so
             PATHS ${FIND_HAGAME_PATHS}
             )
 endif()

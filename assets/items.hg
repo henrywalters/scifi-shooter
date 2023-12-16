@@ -49,3 +49,9 @@ size=48, 48
 description=Revive a small bit of health
 texture=items/health
 restores=15
+
+~PropRequirement~
+[Wrench]
+size=64,64
+description=This tool might be useful to repair things that aren't working
+texture=items/wrench
