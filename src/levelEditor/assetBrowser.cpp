@@ -90,7 +90,9 @@ hg::graphics::Texture* AssetBrowser::texture(hg::utils::FileParts fileParts) {
         return hg::getTexture("ui/fragment_shader");
     } else if (assetType == "vert") {
         return hg::getTexture("ui/vertex_shader");
+    } else if (assetType == "hg") {
+        return hg::getTexture("ui/hg");
     }
 
-    return hg::getTexture("");
+    return hg::getTexture("ui/unknown");
 }

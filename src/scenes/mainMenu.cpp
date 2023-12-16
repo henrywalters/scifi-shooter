@@ -3,6 +3,8 @@
 //
 #include <hagame/graphics/shaders/text.h>
 #include <hagame/graphics/shaders/texture.h>
+#include <hagame/graphics/monitors.h>
+#include <hagame/graphics/windows.h>
 #include "mainMenu.h"
 #include "runtime.h"
 #include "levelEditor.h"
@@ -32,29 +34,31 @@ void MainMenu::onInit() {
 
     auto font = getFont("8bit");
 
-    m_versionBuffer = TextBuffer(font, "", Vec3(0, m_window->size().y() - 16, 0), TextHAlignment::Left);
+    m_versionBuffer = TextBuffer(font, "", Vec3(0, 0, 0), TextHAlignment::Left);
     m_versionBuffer.text(BUILD_TAG);
 
     m_buttons.push_back(
         MenuButton {
-    TextButton(Vec2(GAME_SIZE[0] / 2, GAME_SIZE[1] / 2 + 50), font, "Start Game"),
+    TextButton(Vec2(0, 0), font, "Start Game"),
     "runtime"
         }
     );
 
     m_buttons.push_back(
         MenuButton {
-    TextButton(Vec2(GAME_SIZE[0] / 2, GAME_SIZE[1] / 2), font, "Level Editor"),
+    TextButton(Vec2(0,0), font, "Level Editor"),
     "level_editor"
         }
     );
 
     m_buttons.push_back(
         MenuButton {
-    TextButton(Vec2(GAME_SIZE[0] / 2, GAME_SIZE[1] / 2 - 50), font, "Settings"),
+    TextButton(Vec2(0, 0), font, "Settings"),
     "settings"
         }
     );
+
+    resize();
 
     for (auto& button : m_buttons) {
         button.button.events.subscribe([&](ButtonEvents event) {
@@ -69,6 +73,10 @@ void MainMenu::onInit() {
             }
         });
     }
+
+    hg::graphics::Windows::Events.subscribe(WindowEvents::Resize, [&](Window* window) {
+        resize();
+    });
 }
 
 void MainMenu::onUpdate(double dt) {
@@ -111,5 +119,27 @@ void MainMenu::render(double dt) {
 
     m_renderPasses.get(RenderMode::Color)->texture->bind();
     m_mesh.render();
+}
+
+void MainMenu::resize() {
+
+    auto size = m_window->size();
+
+    m_quad.size(size.cast<float>());
+    m_mesh.update(&m_quad);
+
+    m_renderPasses.resize(RenderMode::Color, size);
+
+    m_versionBuffer.pos(Vec3(0, size[1] - 16, 0));
+
+    float verticalPercent = size[1] > 500 ? 0.3 : 0.7;
+    float menuHeight = size[1] * verticalPercent;
+    float itemHeight = 25;
+    float padding = (menuHeight - itemHeight * m_buttons.size()) / (m_buttons.size() + 1);
+    float margin = (size[1] - menuHeight) / 2;
+
+    for (int i = 0; i < m_buttons.size(); i++) {
+        m_buttons[i].button.setPos(Vec2(size[0] / 2, size[1] - margin - itemHeight * i - padding * (i + 1)));
+    }
 }
 

@@ -18,35 +18,12 @@
 
 using namespace hg::graphics;
 
-// Function to generate a sine wave
-void generateSineWave(ALsizei numSamples, ALsizei channels, ALsizei bitDepth, ALuint sampleRate, ALvoid* data) {
-    for (ALsizei i = 0; i < numSamples; ++i) {
-        // Generate a sine wave for the left channel
-        float leftValue = std::sin(2.0f * M_PI * 218.0f * static_cast<float>(i) / sampleRate);
-
-        // Generate a sine wave for the right channel (shifted in phase)
-        float rightValue = std::sin(2.0f * M_PI * 440.0f * static_cast<float>(i) / sampleRate + M_PI / 2.0f);
-
-        // Scale the values to fit in the specified bit depth
-        int16_t scaledLeftValue = static_cast<int16_t>(leftValue * static_cast<float>(INT16_MAX));
-        int16_t scaledRightValue = static_cast<int16_t>(rightValue * static_cast<float>(INT16_MAX));
-
-        // Set the values in the stereo buffer
-        reinterpret_cast<int16_t*>(data)[2 * i] = scaledLeftValue;
-        reinterpret_cast<int16_t*>(data)[2 * i + 1] = scaledRightValue;
-    }
-}
-
 void ScifiGame::onInit() {
 #if !HEADLESS
     m_window = Windows::Create(GAME_NAME, m_size);
 
     Windows::Events.subscribe(WindowEvents::Close, [&](Window* window) {
         running(false);
-    });
-
-    Windows::Events.subscribe(WindowEvents::Resize, [&](Window* window) {
-        // scenes()->get<Runtime>("runtime")->setSize(window->size());
     });
 #endif
 

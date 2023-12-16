@@ -2,8 +2,8 @@
 // Created by henry on 12/6/23.
 //
 
-#ifndef SCIFISHOOTER_MAINMENU_H
-#define SCIFISHOOTER_MAINMENU_H
+#ifndef SCIFISHOOTER_SETTINGS_H
+#define SCIFISHOOTER_SETTINGS_H
 
 #include <future>
 
@@ -28,10 +28,10 @@
 #include "../common/console.h"
 #include "../systems/renderer.h"
 
-class MainMenu : public hg::Scene {
+class Settings : public hg::Scene {
 public:
 
-    MainMenu(hg::graphics::Window* window);
+    Settings(hg::graphics::Window* window);
 
 protected:
 
@@ -50,6 +50,7 @@ private:
     hg::graphics::MeshInstance m_mesh;
 
     std::vector<MenuButton> m_buttons;
+
     hg::graphics::TextBuffer m_versionBuffer;
 
     std::shared_ptr<GameState> m_state;
@@ -58,8 +59,6 @@ private:
 
     std::string m_hovering;
     bool m_isHovering;
-
-    void resize();
 
     void render(double dt);
 
