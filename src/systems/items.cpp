@@ -48,7 +48,8 @@ void Items::load(hg::utils::MultiConfig config) {
 
 void Items::onSpawn(hg::Entity *entity) {
     auto item = entity->getComponent<Item>();
-    auto sprite = entity->addComponent<hg::graphics::Sprite>(item->def->size.cast<float>());
+    auto sprite = entity->addComponent<hg::graphics::Sprite>();
+    sprite->size = item->def->size.cast<float>();
     sprite->texture = item->def->texture;
     entity->name = item->def->tag;
 }

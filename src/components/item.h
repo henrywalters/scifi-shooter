@@ -20,6 +20,5 @@ protected:
 };
 
 HG_COMPONENT(Core, Item)
-HG_FIELD(Item, ItemDef*, def)
 
 #endif //SCIFISHOOTER_ITEM_H

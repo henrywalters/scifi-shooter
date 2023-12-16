@@ -1,26 +1,26 @@
 //
-// Created by henry on 12/5/23.
+// Created by henry on 12/12/23.
 //
 #include "entityViewer.h"
+#include "imgui.h"
+#include "componentExplorer.h"
+#include "../../thirdparty/imgui/misc/cpp/imgui_stdlib.h"
 
-void EntityViewer::render(hg::Entity *root) {
-    renderTree(root);
-    if (m_selected) {
-        renderEntity(m_selected);
-    }
-}
-
-void EntityViewer::renderEntity(hg::Entity *entity) {
-    ImGui::SeparatorText(entity->name.c_str());
-    ImGui::InputText("Name", entity->name.data(), 500);
+void entityViewer(hg::Entity* entity) {
+    ImGui::InputText("Name", &entity->name);
 
     if (entity->name.c_str() == "") {
         entity->name = "Entity<" + std::to_string(entity->id()) + ">";
     }
 
     ImGui::DragFloat3("Position", entity->transform.position.vector);
-    ImGui::DragFloat4("Rotation", entity->transform.rotation.vector);
     ImGui::DragFloat3("Scale", entity->transform.scale.vector);
+
+    hg::Vec3 axis = entity->transform.rotation.rotatePoint(hg::Vec3::Right());
+    float degrees = std::atan2(axis[1], axis[0]) * hg::math::RAD2DEG;
+    ImGui::DragFloat("Rotation", &degrees);
+
+    entity->transform.rotation = hg::math::Quaternion<float>(degrees * hg::math::DEG2RAD, hg::Vec3::Face());
 
     if (ImGui::Button("Add Component")) {
         ImGui::OpenPopup(COMPONENT_EXPLORER.c_str());
@@ -43,35 +43,3 @@ void EntityViewer::renderEntity(hg::Entity *entity) {
         }
     }
 }
-
-void EntityViewer::renderTree(hg::Entity* entity) {
-    ImGui::ShowDemoWindow();
-
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth;
-
-    if (entity->children().size() > 0) {
-        flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-    } else {
-        flags |= ImGuiTreeNodeFlags_Leaf;
-    }
-
-    if (entity == m_selected) {
-        flags |= ImGuiTreeNodeFlags_Selected;
-    }
-
-    bool open = ImGui::TreeNodeEx(entity->name.c_str(), flags);
-
-    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-        m_selected = entity;
-    }
-
-    if (open) {
-
-        for (const auto& child : entity->children()) {
-            renderTree((hg::Entity*)child);
-        }
-        ImGui::TreePop();
-    }
-}
-
-

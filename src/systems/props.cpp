@@ -8,7 +8,8 @@ using namespace hg::utils;
 
 void Props::onSpawn(hg::Entity *entity) {
     auto prop = entity->getComponent<Prop>();
-    auto sprite = entity->addComponent<hg::graphics::Sprite>(prop->def->size);
+    auto sprite = entity->addComponent<hg::graphics::Sprite>();
+    sprite->size = prop->def->size;
     prop->state = prop->def->defaultState;
     sprite->texture = prop->def->states[prop->state].texture;
 }

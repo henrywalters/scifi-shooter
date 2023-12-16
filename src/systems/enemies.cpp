@@ -107,7 +107,7 @@ void Enemies::renderUI() {
             }
 
             for (auto &[key, value]: *ai->m_behavior->context()) {
-                ImGui::Text(("\t" + BTagNames[key] + " = " + toString(value)).c_str());
+                ImGui::Text(("\t" + BTagNames[key] + " = " + utils::serialize(value)).c_str());
             }
         }
 

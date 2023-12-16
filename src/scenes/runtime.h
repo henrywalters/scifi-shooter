@@ -19,7 +19,7 @@
 #include <hagame/graphics/textBuffer.h>
 #include <hagame/audio/player.h>
 
-#include "../levelEditor/entityViewer.h"
+#include "../levelEditor/entityTree.h"
 
 #include "../components/actor.h"
 
@@ -52,7 +52,7 @@ protected:
 
 private:
 
-    EntityViewer m_entityViewer;
+    EntityTree m_entityTree;
 
     hg::audio::Player* m_player;
 

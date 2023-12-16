@@ -4,6 +4,7 @@ precision highp float;
 
 in vec2 TexCoord;
 in vec3 FragPos;
+in float UseLighting;
 
 layout (binding = 0) uniform sampler2D colorTex;
 layout (binding = 1) uniform sampler2D lightTex;
@@ -48,12 +49,12 @@ void main() {
     vec4 light_lb = vec4(min_light, min_light, min_light, 1.0);
     vec4 color_lb = vec4(min_color, min_color, min_color, 1.0);
 
-    vec4 color = texture(colorTex, TexCoord);
-    color = min(max(vec4(color.rgb, 1.0f), color_lb), vec4(1.0f));
+    vec4 raw_color = texture(colorTex, TexCoord);
+    vec4 color = min(max(vec4(raw_color.rgb, 1.0f), color_lb), vec4(1.0f));
     vec4 light = min(max(vec4(col.rgb, 1.0f), light_lb), vec4(1.0));
     vec4 debug = texture(debugTex, TexCoord);
     vec4 ui = texture(uiTex, TexCoord);
 
-    vec3 diffuse = color.rgb * light.rgb;
+    vec3 diffuse = UseLighting * color.rgb * light.rgb + (1 - UseLighting) * raw_color.rgb;
     FragColor = vec4(diffuse, color.a) + ui + debug;
 }

@@ -16,7 +16,8 @@ class LightComponent : public hg::Component {
 public:
 
     LightComponent():
-        mesh(&triangles)
+        triangles(std::make_shared<hg::graphics::Mesh>()),
+        mesh(triangles.get())
     {}
 
     float fov = M_PI * 2;
@@ -24,7 +25,7 @@ public:
     float attenuation = 0.005f;
     bool dynamic = true;
 
-    hg::graphics::Mesh triangles;
+    std::shared_ptr<hg::graphics::Mesh> triangles;
     hg::graphics::MeshInstance mesh;
 
     // Compute all of the shadows based on the level & other collider geometry

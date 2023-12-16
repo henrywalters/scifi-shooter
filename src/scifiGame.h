@@ -24,6 +24,9 @@ public:
         m_size(size),
         hg::Game(name)
     {}
+
+    hg::graphics::Window* window() const { return m_window; }
+
 #endif
 
 protected:

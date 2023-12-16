@@ -7,7 +7,6 @@
 
 #include <hagame/core/component.h>
 #include <optional>
-#include "imgui.h"
 
 const std::string COMPONENT_EXPLORER = "component_explorer";
 

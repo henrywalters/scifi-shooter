@@ -1,16 +1,48 @@
 //
 // Created by henry on 12/5/23.
 //
+#include "imgui.h"
 #include "levelEditor.h"
 #include "../systems/renderer.h"
 #include "../levelEditor/tools/tilemapTool.h"
+#include "../levelEditor/scriptExplorer.h"
 
 using namespace hg;
 using namespace hg::graphics;
 
 void LevelEditor::onInit() {
 
+    m_entityTree.events.subscribe(EntityTree::EventTypes::SelectEntity, [&](auto e) {
+        m_selectedEntity = e.entity;
+    });
+
+    m_entityTree.events.subscribe(EntityTree::EventTypes::AddChild, [&](auto e) {
+        entities.add(e.entity);
+    });
+
+    m_entityTree.events.subscribe(EntityTree::EventTypes::RemoveEntity, [&](auto e) {
+        if (e.entity == m_selectedEntity) {
+            m_selectedEntity = nullptr;
+        }
+        entities.remove(e.entity);
+    });
+
+    m_entityTree.events.subscribe(EntityTree::EventTypes::AddChildTo, [&](auto e) {
+        if (std::find(e.entity->children().begin(), e.entity->children().end(), e.target) != e.entity->children().end()) {
+            return; // Cant add a parent to its own child
+        }
+        e.target->addChild(e.entity);
+    });
+
+    m_scripts = std::make_unique<CppScriptManager>("/home/henry/development/games/scifi-shooter/cmake-build-debug/libscripts.so");
+    auto script_paths = hg::utils::d_listFiles(ASSET_DIR + "scripts");
+
+    for (const auto path : script_paths) {
+        m_scripts->registerScript(path);
+    }
+
     m_state->params.debugRender = true;
+    m_state->useLighting = false;
 
     addSystem<Renderer>(m_window, m_state.get(), true);
 
@@ -50,10 +82,19 @@ void LevelEditor::onInit() {
     });
 
     m_console = std::make_unique<Console>(hg::getFont("8bit"));
+
+    for (int i = 0; i < 1; i++) {
+        auto entity = entities.add();
+        auto sprite = entity->addComponent<hg::graphics::Quad>();
+        sprite->size = hg::Vec2(15.0);
+        sprite->color = m_state->randomColor();
+        entity->transform.position = hg::Vec3(m_state->random.real<float>(-100, 100), m_state->random.real<float>(-100, 100), 0);
+    }
 }
 
 void LevelEditor::onUpdate(double dt) {
     ImGui::ShowDemoWindow();
+
 
     auto renderer = getSystem<Renderer>();
 
@@ -74,6 +115,30 @@ void LevelEditor::onUpdate(double dt) {
 }
 
 void LevelEditor::renderUI(double dt) {
+
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New")) {
+                reset();
+            }
+
+            if (ImGui::MenuItem("Save As")) {
+                saveAs();
+            }
+
+            if (m_saveFile != "" && ImGui::MenuItem("Save")) {
+                saveToDisc();
+            }
+
+            if (ImGui::MenuItem("Load")) {
+                loadFromDisc();
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+
     ImGui::Begin("Level Editor");
 
     ImGui::SeparatorText("Stats");
@@ -82,32 +147,105 @@ void LevelEditor::renderUI(double dt) {
     ImGui::Text(("Mouse: " + m_mousePos.toString()).c_str());
     ImGui::SeparatorText("Settings");
     ImGui::Checkbox("Debug Render", &m_state->params.debugRender);
+    ImGui::Checkbox("Render Lighting", &m_state->useLighting);
     ImGui::Checkbox("VSync", &m_state->params.vsync);
     ImGui::DragFloat2("Mouse Snap", m_snapSize.vector, 1, 1);
 
-    ImGui::SeparatorText("Tools");
-    for (const auto& tool : m_tools) {
-        if (ImGui::Button(tool->getButtonLabel().c_str())) {
-            m_tool = tool.get();
-            m_tool->onInit();
-        }
-    }
-
-    if (m_tool) {
-        ImGui::SeparatorText(m_tool->getName().c_str());
-        m_tool->renderUI(dt);
-    }
-
-    ImGui::SeparatorText("Entities");
-    if (ImGui::Button("Add Entity")) {
-        entities.add();
-    }
-    m_entityViewer.render(entities.root.get());
-
     ImGui::End();
+
+    renderEntityWindow(dt);
+    renderScriptWindow(dt);
+    renderSelectedEntityWindow(dt);
+
+    m_browser.render();
 }
 
 void LevelEditor::selectTool(Tool *tool) {
     m_tool = tool;
     m_tool->onInit();
+}
+
+void LevelEditor::renderEntityWindow(double dt) {
+
+    ImGui::Begin("Entities");
+
+    if (ImGui::Button("Add Entity")) {
+        entities.add();
+    }
+
+    m_entityTree.render(this, entities.root.get());
+
+    ImGui::End();
+}
+
+void LevelEditor::renderScriptWindow(double dt) {
+    ImGui::Begin("Scripts");
+
+    if (ImGui::Button("Add Script")) {
+        ImGui::OpenPopup(SCRIPT_EXPLORER.c_str());
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Recompile")) {
+        int code = system("/home/henry/Downloads/CLion-2022.3.1/clion-2022.3.1/bin/cmake/linux/bin/cmake --build /home/henry/development/games/scifi-shooter/cmake-build-debug --target scripts -j 16");
+        std::cout << "CODE = " << code << "\n";
+        m_scripts->reload();
+    }
+
+    /*
+    for (const auto& script : m_activeScripts) {
+        ImGui::Text(script->def.name.c_str());
+        ImGui::SameLine();
+        if (ImGui::Button("Remove")) {
+            m_activeScripts.erase(std::find(m_activeScripts.begin(), m_activeScripts.end(), script));
+        }
+    }*/
+
+    auto newScript = scriptExplorer(m_scripts.get());
+
+    if (newScript.has_value()) {
+        auto script = m_scripts->get(newScript.value().name);
+        auto cppScript = this->addScript<CppScript>(script);
+        cppScript->init();
+    }
+
+    ImGui::End();
+}
+
+void LevelEditor::renderSelectedEntityWindow(double dt) {
+    if (!m_selectedEntity) {
+        return;
+    }
+
+    ImGui::Begin("Entity");
+
+    entityViewer(m_selectedEntity);
+
+    ImGui::End();
+}
+
+void LevelEditor::reset() {
+    entities.clear();
+    // m_activeScripts.clear();
+    m_selectedEntity = nullptr;
+}
+
+void LevelEditor::saveAs() {
+    m_browser.saveFile([&](auto path){
+        m_saveFile = path;
+        saveToDisc();
+    }, {LEVEL_EXT});
+}
+
+void LevelEditor::saveToDisc() {
+    auto config = save();
+    utils::f_write(m_saveFile, config.toString());
+}
+
+void LevelEditor::loadFromDisc() {
+    m_browser.loadFile([&](auto path) {
+        m_saveFile = path;
+        auto config = utils::MultiConfig::Parse(m_saveFile);
+        reset();
+        load(config);
+    }, {LEVEL_EXT});
 }

@@ -44,7 +44,10 @@ void Loading::onInit() {
     loadShader(PARTICLE_SHADER);
     loadShader("light", "shaders/light.vert", "shaders/light.frag");
     loadShader("combined", "shaders/combined.vert", "shaders/combined.frag");
+    loadShader("batch_color", "shaders/batch_color.vert", "shaders/batch_color.frag");
+    loadShader("batch_texture", "shaders/batch_texture.vert", "shaders/batch_texture.frag");
 
+    setMissingTexture("textures/missing.png");
     loadTexture("logo", "textures/hg_studio.png");
 
     auto defaultFont = hg::loadFont("8bit", hg::ASSET_DIR + "fonts/8bit.ttf");
@@ -104,6 +107,7 @@ void Loading::onInit() {
     });
 
     m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::TextInput, [&](auto keyPress) {
+        Console* console = ((ScifiGame*) game())->console.get();
         if (console->status() == Console::Status::Open) {
             console->newChar(keyPress.key);
         }

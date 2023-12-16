@@ -23,7 +23,8 @@ Entity* AddActor(hg::Scene* scene, hg::Vec3 pos, std::string texture, hg::Vec2 s
 
     entity->transform.position = pos;
 
-    body->addComponent<components::SpriteSheetAnimator>(size, Vec2::Zero());
+    auto anim = body->addComponent<components::SpriteSheetAnimator>();
+    anim->size = size;
 
     auto actor = entity->addComponent<Actor>();
     actor->size = size;

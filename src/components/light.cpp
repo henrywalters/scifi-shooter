@@ -10,11 +10,20 @@ using namespace hg::math;
 using namespace hg::graphics;
 
 void LightComponent::computeMesh(std::vector<Polygon> geometry) {
+
+    if (geometry.size() == 0) { // If there is nothing to worry about, then we can just draw rectangle
+        triangles = std::make_shared<primitives::Disc>(50000, 10);
+        mesh.update(triangles.get());
+        return;
+    } else {
+        triangles = std::make_shared<Mesh>();
+    }
+
     Vec2 origin = entity->transform.position.resize<2>();
     std::vector<Vec2> points;
 
-    triangles.vertices.clear();
-    triangles.indices.clear();
+    triangles->vertices.clear();
+    triangles->indices.clear();
 
     for (const auto& poly : geometry) {
         for (const auto& edge : poly) {
@@ -80,8 +89,8 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         Vec2 p2 = endpoints[i % endpoints.size()][0];
         hg::graphics::Triangle tri(p1.resize<3>(), origin.resize<3>(), p2.resize<3>());
 
-        tri.insert(triangles.vertices, triangles.indices);
+        tri.insert(triangles->vertices, triangles->indices);
     }
 
-    mesh.update(&triangles);
+    mesh.update(triangles.get());
 }

@@ -48,6 +48,8 @@ void Runtime::loadLevel(std::string level) {
     auto items = getSystem<Items>();
     auto props = getSystem<Props>();
 
+    std::cout << "ITEMS ID = " << Items::id << "\n";
+
     items->spawn(items->get("Wrench"), m_state->randomTilemapPos());
     auto lever = props->spawn(props->get("Lever"), m_state->randomTilemapPos());
     lever->getComponent<Prop>()->addRequirement("off", "Wrench");
@@ -215,7 +217,7 @@ void Runtime::renderUI(double dt) {
     ImGui::Checkbox("Player Invincible", &m_state->params.invincible);
     ImGui::Checkbox("VSync", &m_state->params.vsync);
 
-    m_entityViewer.render(entities.root.get());
+    m_entityTree.render(this, entities.root.get());
 
     /*
 

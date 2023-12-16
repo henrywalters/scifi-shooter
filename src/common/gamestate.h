@@ -25,6 +25,7 @@ struct GameState {
     hg::utils::Random random;
     RuntimeParameters params;
     hg::EntityMap2D entityMap;
+    bool useLighting = true;
     std::vector<hg::math::Polygon> levelGeometry;
     std::unique_ptr<hg::graphics::Tilemap> tilemap;
     hg::utils::Store<std::string, hg::graphics::ParticleEmitterSettings> particles;
