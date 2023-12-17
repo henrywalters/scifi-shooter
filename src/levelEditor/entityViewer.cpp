@@ -31,11 +31,19 @@ void entityViewer(hg::Entity* entity) {
         hg::ComponentFactory::Attach(entity, addComponent.value());
     }
 
+    int index = 0;
+
     if (entity->components().size() > 0) {
         ImGui::SeparatorText("Components");
         for (const auto& component : entity->components()) {
+            ImGui::Separator();
             ImGui::Text(component->operator std::string().c_str());
-            int index = 0;
+            ImGui::SameLine();
+            ImGui::PushID(index++);
+            if (ImGui::Button("remove")) {
+                hg::ComponentFactory::Get(component->className()).remove(entity);
+            }
+            ImGui::PopID();
             for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
                 ImGui::PushID(index++);
                 if (editComponentField(component, field)) {

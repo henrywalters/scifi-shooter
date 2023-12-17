@@ -21,6 +21,7 @@ struct GameState {
     bool menuOpen = false;
     int wave = 0;
     float zoom = 0.8f;
+    float pixelsPerMeter = 64;
     hg::Scene* scene;
     hg::utils::Random random;
     RuntimeParameters params;

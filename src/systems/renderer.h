@@ -36,6 +36,7 @@ enum class RenderMode {
     Lighting,
     Debug,
     UI,
+    Combined,
 };
 
 class Renderer : public hg::System {
@@ -62,6 +63,8 @@ public:
     void setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius);
 
     void setWindowSize(hg::Vec2i size);
+
+    hg::graphics::RawTexture<GL_RGBA32F>* getRender();
 
 private:
 

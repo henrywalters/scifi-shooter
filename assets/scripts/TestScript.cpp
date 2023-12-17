@@ -30,7 +30,7 @@ extern "C" {
             if (entity->name.substr(0, 8) == "RotateMe") {
                 entity->transform.rotation = Quat(initTime * -1, Vec3::Face());
 
-                entity->transform.position = Vec3(cos(initTime) * 100, sin(initTime) * 100, 0);
+                entity->transform.position = Vec3(cos(initTime) * 10, sin(initTime) * 10, 0);
             }
         }
     }

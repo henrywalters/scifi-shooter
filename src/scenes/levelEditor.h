@@ -50,6 +50,7 @@ protected:
 
     void onInit() override;
     void onUpdate(double dt) override;
+    void onAfterUpdate() override;
 
 private:
 
@@ -76,10 +77,12 @@ private:
 
     void renderUI(double dt);
 
+    void renderSettingsWindow(double dt);
     void renderEntityWindow(double dt);
     void renderSelectedEntityWindow(double dt);
     void renderScriptWindow(double dt);
     void renderAssetWindow(double dt);
+    void renderRenderWindow(double dt);
 
     void reset();
     void saveAs();

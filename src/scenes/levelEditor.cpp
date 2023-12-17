@@ -1,6 +1,7 @@
 //
 // Created by henry on 12/5/23.
 //
+#include <hagame/graphics/windows.h>
 #include "imgui.h"
 #include "levelEditor.h"
 #include "../systems/renderer.h"
@@ -11,6 +12,10 @@ using namespace hg;
 using namespace hg::graphics;
 
 void LevelEditor::onInit() {
+
+    hg::graphics::Windows::Events.subscribe(WindowEvents::Resize, [&](Window* window) {
+        // getSystem<Renderer>()->setWindowSize(window->size());
+    });
 
     m_entityTree.events.subscribe(EntityTree::EventTypes::SelectEntity, [&](auto e) {
         m_selectedEntity = e.entity;
@@ -94,8 +99,9 @@ void LevelEditor::onInit() {
 }
 
 void LevelEditor::onUpdate(double dt) {
-    ImGui::ShowDemoWindow();
 
+    renderUI(game()->dt());
+    ImGui::ShowDemoWindow();
 
     auto renderer = getSystem<Renderer>();
 
@@ -111,8 +117,6 @@ void LevelEditor::onUpdate(double dt) {
     if (m_tool) {
         m_tool->onUpdate(dt);
     }
-
-    renderUI(dt);
 }
 
 void LevelEditor::renderUI(double dt) {
@@ -140,24 +144,54 @@ void LevelEditor::renderUI(double dt) {
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::Begin("Level Editor");
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoMove |
+            ImGuiConfigFlags_DockingEnable |
+            ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-    ImGui::SeparatorText("Stats");
-    ImGui::Text(("FPS: " + std::to_string(1.0 / dt)).c_str());
-    ImGui::Text(("Raw Mouse: " + m_rawMousePos.toString()).c_str());
-    ImGui::Text(("Mouse: " + m_mousePos.toString()).c_str());
-    ImGui::SeparatorText("Settings");
-    ImGui::Checkbox("Debug Render", &m_state->params.debugRender);
-    ImGui::Checkbox("Render Lighting", &m_state->useLighting);
-    ImGui::Checkbox("VSync", &m_state->params.vsync);
-    ImGui::DragFloat2("Mouse Snap", m_snapSize.vector, 1, 1);
+    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeightWithSpacing()));
+    ImGui::SetNextWindowSize(ImVec2(m_window->size()[0], m_window->size()[1] - ImGui::GetFrameHeightWithSpacing()));
+
+    ImGui::Begin("Level Editor", nullptr, flags);
+
+    if (ImGui::BeginTable("columns", 3, ImGuiTableFlags_Resizable)) {
+        ImGui::TableNextColumn();
+        ImGui::BeginChild("Left");
+        ImGui::DockSpace(ImGui::GetID("Left"));
+        ImGui::EndChild();
+
+        ImGui::TableNextColumn();
+
+        if (ImGui::BeginTable("rows", 1, ImGuiTableFlags_Resizable)) {
+            ImGui::TableNextRow();
+            ImGui::BeginChild("Middle_Top");
+            ImGui::DockSpace(ImGui::GetID("Middle_Top"));
+            ImGui::EndChild();
+            ImGui::TableNextRow();
+            ImGui::BeginChild("Middle_Bottom");
+            ImGui::DockSpace(ImGui::GetID("Middle_Bottom"));
+            ImGui::EndChild();
+            ImGui::EndTable();
+        }
+
+        ImGui::TableNextColumn();
+        ImGui::BeginChild("Right");
+        ImGui::DockSpace(ImGui::GetID("Right"));
+        ImGui::EndChild();
+
+        ImGui::EndTable();
+    }
 
     ImGui::End();
 
     renderEntityWindow(dt);
     renderScriptWindow(dt);
     renderSelectedEntityWindow(dt);
+    renderSettingsWindow(dt);
     renderAssetWindow(dt);
+    renderRenderWindow(dt);
 
     m_browser.render();
 }
@@ -258,5 +292,44 @@ void LevelEditor::loadFromDisc() {
         reset();
         load(config);
     }, {LEVEL_EXT});
+}
+
+void LevelEditor::onAfterUpdate() {
+
+}
+
+void LevelEditor::renderRenderWindow(double dt) {
+    ImGui::Begin("Render");
+
+    auto size = ImGui::GetWindowSize();
+    float aspectRatio = (float) GAME_SIZE[1] / GAME_SIZE[0];
+
+    ImVec2 imageSize;
+
+    if (size[0] * aspectRatio > size[1]) {
+        imageSize = ImVec2(size[1] / aspectRatio, size[1]);
+    } else {
+        imageSize = ImVec2(size[0], size[0] * aspectRatio);
+    }
+
+    ImGui::Image((void*)getSystem<Renderer>()->getRender()->id, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+
+    ImGui::End();
+}
+
+void LevelEditor::renderSettingsWindow(double dt) {
+    ImGui::Begin("Settings");
+
+    ImGui::SeparatorText("Stats");
+    ImGui::Text(("FPS: " + std::to_string(1.0 / dt)).c_str());
+    ImGui::Text(("Raw Mouse: " + m_rawMousePos.toString()).c_str());
+    ImGui::Text(("Mouse: " + m_mousePos.toString()).c_str());
+    ImGui::SeparatorText("Settings");
+    ImGui::Checkbox("Debug Render", &m_state->params.debugRender);
+    ImGui::Checkbox("Render Lighting", &m_state->useLighting);
+    ImGui::Checkbox("VSync", &m_state->params.vsync);
+    ImGui::DragFloat2("Mouse Snap", m_snapSize.vector, 1, 1);
+
+    ImGui::End();
 }
 

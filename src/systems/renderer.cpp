@@ -54,12 +54,14 @@ Renderer::Renderer(Window* window, GameState* state, bool editorMode):
 
 void Renderer::setWindowSize(hg::Vec2i size) {
     m_camera.size = size.cast<float>();
-    m_displayQuad.size(size.cast<float>());
+    //m_displayQuad.size(size.cast<float>());
+    //m_mesh.update(&m_displayQuad);
+    //m_renderPasses.resizeAll(size);
 }
 
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
-    m_camera.size = GAME_SIZE.copy().cast<float>();
+    m_camera.size = Vec2((float) HD[0] / HD[1], 1) * m_state->pixelsPerMeter;
     m_camera.centered = true;
 
     /*
@@ -75,11 +77,12 @@ void Renderer::onInit() {
     vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 5, 4, offsetof(Quad, color));
     vao->setInstanced(3, 5);
      */
-
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
     m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
     m_renderPasses.create(RenderMode::Debug, GAME_SIZE);
     m_renderPasses.create(RenderMode::UI, GAME_SIZE);
+    m_renderPasses.create(RenderMode::Combined, GAME_SIZE);
 
     m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
 
@@ -103,12 +106,15 @@ void Renderer::onBeforeUpdate() {
 
     m_window->color(m_state->tilemap->background);
 
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.clear(RenderMode::Color, Color::black());
     m_renderPasses.clear(RenderMode::Lighting, Color::black());
     m_renderPasses.clear(RenderMode::Debug, Color::black());
     m_renderPasses.clear(RenderMode::UI, Color::black());
+    m_renderPasses.clear(RenderMode::Combined, Color::black());
 
     m_renderPasses.bind(RenderMode::Color);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     Debug::ENABLED = m_state->params.debugRender;
 
@@ -215,6 +221,7 @@ void Renderer::setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius) 
 void Renderer::colorPass(double dt) {
 
     m_renderPasses.bind(RenderMode::Color);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     int pIndex = 0;
     for (const auto& poly : m_state->levelGeometry) {
@@ -336,6 +343,7 @@ void Renderer::colorPass(double dt) {
 
 void Renderer::lightPass(double dt) {
     m_renderPasses.bind(RenderMode::Lighting);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     auto shader = getShader("light");
     shader->use();
@@ -361,6 +369,7 @@ void Renderer::lightPass(double dt) {
 void Renderer::debugPass(double dt) {
 
     m_renderPasses.bind(RenderMode::Debug);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     auto shader = getShader("color");
     shader->use();
@@ -383,6 +392,7 @@ void Renderer::debugPass(double dt) {
 void Renderer::uiPass(double dt) {
 
     m_renderPasses.bind(RenderMode::UI);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     if (m_editorMode) {
         return;
@@ -443,13 +453,14 @@ void Renderer::uiPass(double dt) {
 
 void Renderer::combinedPass(double dt) {
 
-    m_renderPasses.unbind(RenderMode::UI);
+    m_renderPasses.bind(RenderMode::Combined);
+    glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     auto shader = getShader("combined");
     shader->use();
     shader->setFloat("useLighting", m_state->useLighting ? 1.0 : 0.0);
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, GAME_SIZE[0], 0, GAME_SIZE[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
     glActiveTexture(GL_TEXTURE0 + 0);
@@ -467,6 +478,13 @@ void Renderer::combinedPass(double dt) {
     m_mesh.render();
 
     glActiveTexture(GL_TEXTURE0 + 0);
+
+    m_renderPasses.unbind(RenderMode::Combined);
+    glViewport(0, 0, m_window->size()[0], m_window->size()[1]);
+}
+
+hg::graphics::RawTexture<GL_RGBA32F> *Renderer::getRender() {
+    return m_renderPasses.get(RenderMode::Combined)->texture.get();
 }
 
 
