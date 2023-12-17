@@ -46,9 +46,21 @@ void entityViewer(hg::Entity* entity) {
             ImGui::PopID();
             for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
                 ImGui::PushID(index++);
+
                 if (editComponentField(component, field)) {
                     std::cout << "Field: " << field.field << " updated\n";
                 }
+
+                if (field.field == "texture") {
+                    if (ImGui::BeginDragDropTarget()) {
+                        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("png")) {
+                            auto path = (char*) payload->Data;
+                            field.setter(component, std::string(path));
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+                }
+
                 ImGui::PopID();
             }
         }

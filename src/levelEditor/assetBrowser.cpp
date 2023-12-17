@@ -42,10 +42,19 @@ void AssetBrowser::render() {
     for (const auto& file : hg::utils::d_listFiles(path)) {
         ImGui::BeginChild(file.c_str(), size, true);
         auto fileParts = hg::utils::f_getParts(file);
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+            std::string path = hg::utils::s_replace(fileParts.path, fileParts.path, "") + fileParts.name;
+            std::cout << "DRAGGING: " << fileParts.extension.c_str() << " with " << path << "\n";
+            ImGui::SetDragDropPayload(fileParts.extension.c_str(), (void*) path.data(), sizeof(char) * path.size());
+            ImGui::Image((void*)texture(fileParts)->id, ImVec2(64, 64));
+            ImGui::Text(fileParts.fullName.c_str());
+            ImGui::EndDragDropSource();
+        }
         ImGui::SetCursorPos(ImVec2((ImGui::GetWindowSize().x - 64) * 0.5, 5));
         ImGui::Image((void*)texture(fileParts)->id, ImVec2(64, 64));
         ImGui::Text(fileParts.fullName.c_str());
         ImGui::EndChild();
+
         x += size.x + padding;
         if (x < ImGui::GetWindowSize().x - size.x) {
             ImGui::SameLine();

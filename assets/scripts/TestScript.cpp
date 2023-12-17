@@ -11,6 +11,7 @@
 #include <hagame/graphics/components/sprite.h>
 #include "../../src/scifiGame.h"
 #include "../../src/systems/renderer.h"
+#include "../../src/scenes/runtime.h"
 
 using namespace hg;
 
@@ -29,8 +30,16 @@ extern "C" {
         for (const auto& entity : scene->entities.root->children()) {
             if (entity->name.substr(0, 8) == "RotateMe") {
                 entity->transform.rotation = Quat(initTime * -1, Vec3::Face());
-
                 entity->transform.position = Vec3(cos(initTime) * 10, sin(initTime) * 10, 0);
+
+                for (const auto& child : entity->children()) {
+                    child->transform.rotation = Quat(dt, Vec3::Face()) * child->transform.rotation;
+                }
+            }
+
+            if (entity->name == "BG") {
+                auto quad = ((hg::Entity*) entity)->getComponent<hg::graphics::Quad>();
+                quad->color = hg::graphics::Color((float)(sin(initTime / 4.0f) + 1.0f) / 2.0f, (float)(sin(initTime + M_PI / 2.0f) + 1.0f) / 2.0f, (float)(sin(initTime * 2) + 1.0f) / 2.0f);
             }
         }
     }

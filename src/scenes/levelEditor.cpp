@@ -2,6 +2,7 @@
 // Created by henry on 12/5/23.
 //
 #include <hagame/graphics/windows.h>
+#include <hagame/graphics/monitors.h>
 #include "imgui.h"
 #include "levelEditor.h"
 #include "../systems/renderer.h"
@@ -329,6 +330,10 @@ void LevelEditor::renderSettingsWindow(double dt) {
     ImGui::Checkbox("Render Lighting", &m_state->useLighting);
     ImGui::Checkbox("VSync", &m_state->params.vsync);
     ImGui::DragFloat2("Mouse Snap", m_snapSize.vector, 1, 1);
+
+    ImGui::Text(("Window: " + m_window->size().toString() + ", " + m_window->pos().toString()).c_str());
+
+    auto monitors = hg::graphics::Monitors::All();
 
     ImGui::End();
 }

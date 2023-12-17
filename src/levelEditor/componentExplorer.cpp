@@ -5,6 +5,7 @@
 #include <hagame/graphics/color.h>
 #include "componentExplorer.h"
 #include "imgui.h"
+#include "../../thirdparty/imgui/misc/cpp/imgui_stdlib.h"
 
 std::optional<std::string>  componentExplorer() {
 
@@ -70,7 +71,7 @@ bool editComponentField(hg::Component* component, hg::ComponentFactory::Componen
 
     if (field.type == "std::string") {
         std::string initial = std::get<std::string>(value);
-        ImGui::InputText(field.field.c_str(), initial.data(), 500);
+        ImGui::InputText(field.field.c_str(), &initial);
         if (std::get<std::string>(value) != std::string(initial.data())) {
             field.setter(component, std::string(initial.data()));
             return true;
