@@ -59,8 +59,12 @@ public:
     void setCameraPosition(hg::Vec3 pos);
 
     // Set the mouse pos in screen coordinates in the range of [0, 1]
-    void setRawMousePos(hg::Vec2 rawMousePos);
-    hg::Vec2 getMousePos() const;
+    void setRawMousePos(hg::Vec2 rawMousePos) {
+        m_mousePos = m_camera.getGamePos(rawMousePos.prod(m_camera.size));
+    }
+    hg::Vec2 getMousePos() const {
+        return m_mousePos;
+    }
 
     void setLaserPointer(hg::Vec3 start, hg::Vec3 end);
     void setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius);

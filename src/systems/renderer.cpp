@@ -61,7 +61,7 @@ void Renderer::setWindowSize(hg::Vec2i size) {
 
 void Renderer::onInit() {
     m_camera.zoom = m_state->zoom;
-    m_camera.size = Vec2((float) HD[0] / HD[1], 1) * m_state->pixelsPerMeter;
+    m_camera.size = GAME_SIZE.div(m_state->pixelsPerMeter).cast<float>();
     m_camera.centered = true;
 
     /*
@@ -149,16 +149,6 @@ void Renderer::onRender(double dt) {
 void Renderer::setCameraPosition(Vec3 pos) {
     m_camera.transform.position = pos;
 }
-
-hg::Vec2 Renderer::getMousePos() const {
-    return m_mousePos;
-}
-
-void Renderer::setRawMousePos(hg::Vec2 rawMousePos) {
-    hg::Vec2 size(GAME_SIZE[0], GAME_SIZE[1]);
-    m_mousePos = m_camera.getGamePos(rawMousePos.prod(size));
-}
-
 
 void Renderer::onAfterUpdate() {
 

@@ -22,9 +22,10 @@ extern "C" {
         auto entity = scene->entities.add();
         entity->transform.position = mousePos.resize<3>();
 
-        auto quad = entity->addComponent<hg::graphics::Quad>();
-        quad->size = hg::Vec2(5, 5);
-        quad->color = hg::graphics::Color::blue();
+        auto quad = entity->addComponent<hg::graphics::Sprite>();
+        quad->size = hg::Vec2(0.1, 0.1);
+        quad->texture = "ui/fragment_shader";
+        //quad->color = hg::graphics::Color::blue();
     }
 
     void DrawQuads_close(Scene* scene) {
