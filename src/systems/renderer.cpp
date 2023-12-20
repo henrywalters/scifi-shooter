@@ -92,15 +92,20 @@ void Renderer::onInit() {
 
     Debug::Initialize(colorShader, textShader, font);
 
-    m_wave = TextBuffer(font, "Wave 0", Vec3(m_window->size().x() / 2, m_window->size().y() - 50, 0), TextHAlignment::Center);
-    m_enemies = TextBuffer(font, "0 Enemies Remaining", Vec3(m_window->size().x() / 2, m_window->size().y() - 75, 0), TextHAlignment::Center);
-    m_weapon = TextBuffer(font, "Shotgun", Vec3(m_window->size().x() - 200, 50), Vec3(200, 200, 0), TextHAlignment::Right);
-    m_ammo = TextBuffer(font, "10 / 12", Vec3(m_window->size().x() - 200, 75), Vec3(200, 200, 0),TextHAlignment::Right);
+    m_wave = TextBuffer(font, "Wave 0", Vec3(GAME_SIZE[0] / 2, GAME_SIZE[1] - 50, 0), TextHAlignment::Center);
+    m_enemies = TextBuffer(font, "0 Enemies Remaining", Vec3(GAME_SIZE[0] / 2, GAME_SIZE[1] - 75, 0), TextHAlignment::Center);
+    m_weapon = TextBuffer(font, "Shotgun", Vec3(GAME_SIZE[0] - 200, 50), Vec3(200, 200, 0), TextHAlignment::Right);
+    m_ammo = TextBuffer(font, "10 / 12", Vec3(GAME_SIZE[0] - 200, 75), Vec3(200, 200, 0),TextHAlignment::Right);
 }
 
 void Renderer::onBeforeUpdate() {
 
     // m_window->setMouseVisible(m_state->paused);
+
+
+}
+
+void Renderer::onRender(double dt) {
 
     m_camera.zoom = m_state->zoom;
 
@@ -121,7 +126,7 @@ void Renderer::onBeforeUpdate() {
     auto shader = getShader(TEXT_SHADER.name);
     shader->use();
 
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, GAME_SIZE[0], 0, GAME_SIZE[1], -100, 100));
     shader->setMat4("view", Mat4::Identity());
 
     shader = getShader("color");
@@ -129,44 +134,31 @@ void Renderer::onBeforeUpdate() {
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
 
-}
-
-void Renderer::onUpdate(double dt) {
 
     m_window->setVSync(m_state->params.vsync);
 
-    Profiler::Start("Renderer");
-
-    Profiler::Start("Color Pass");
     colorPass(dt);
-    Profiler::End("Color Pass");
-
-    Profiler::Start("Light Pass");
     lightPass(dt);
-    Profiler::End("Light Pass");
-
-    Profiler::Start("Debug Pass");
     debugPass(dt);
-    Profiler::End("Debug Pass");
-
-    Profiler::Start("UI Pass");
     uiPass(dt);
-    Profiler::End("UI Pass");
+    Profiler::Render();
 
-    Profiler::Start("Combined Pass");
     combinedPass(dt);
-    Profiler::End("Combined Pass");
-
-    Profiler::End("Renderer");
 }
 
 void Renderer::setCameraPosition(Vec3 pos) {
     m_camera.transform.position = pos;
 }
 
-hg::Vec2 Renderer::getMousePos(hg::Vec2 rawMousePos) {
-    return m_camera.getGamePos(rawMousePos);
+hg::Vec2 Renderer::getMousePos() const {
+    return m_mousePos;
 }
+
+void Renderer::setRawMousePos(hg::Vec2 rawMousePos) {
+    hg::Vec2 size(GAME_SIZE[0], GAME_SIZE[1]);
+    m_mousePos = m_camera.getGamePos(rawMousePos.prod(size));
+}
+
 
 void Renderer::onAfterUpdate() {
 
@@ -380,11 +372,11 @@ void Renderer::debugPass(double dt) {
     shader = getShader("color");
     shader->use();
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, GAME_SIZE[0], 0, GAME_SIZE[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
     ScifiGame* game = (ScifiGame*) scene->game();
-    game->console->render();
+    // game->console->render();
 
     m_renderPasses.render(RenderMode::Debug, 1);
 }
@@ -398,23 +390,28 @@ void Renderer::uiPass(double dt) {
         return;
     }
 
-    auto player = scene->getSystem<Player>();
-    auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
+    if (scene->hasSystem<Player>()) {
+        auto player = scene->getSystem<Player>();
+        auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
 
-    if (weapon) {
-        if (m_weapon.text() != weapon->settings.name) {
-            m_weapon.text(weapon->settings.name);
-        }
+        if (weapon) {
+            if (m_weapon.text() != weapon->settings.name) {
+                m_weapon.text(weapon->settings.name);
+            }
 
-        std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " + std::to_string(weapon->ammo());
-        if (m_ammo.text() != ammoText) {
-            m_ammo.text(ammoText);
+            std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " +
+                                                                       std::to_string(weapon->ammo());
+            if (m_ammo.text() != ammoText) {
+                m_ammo.text(ammoText);
+            }
         }
     }
 
-    std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
-    if (enemyText != m_enemies.text()) {
-        m_enemies.text(enemyText);
+    if (scene->hasSystem<Enemies>()) {
+        std::string enemyText = std::to_string(scene->getSystem<Enemies>()->size()) + " Enemies Remain";
+        if (enemyText != m_enemies.text()) {
+            m_enemies.text(enemyText);
+        }
     }
 
     std::string waveText = "Wave " + std::to_string(m_state->wave);
@@ -439,7 +436,7 @@ void Renderer::uiPass(double dt) {
     shader = getShader(TEXT_BUFFER_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());
-    shader->setMat4("projection", Mat4::Orthographic(0, m_window->size().x(), 0, m_window->size().y(), -100, 100));
+    shader->setMat4("projection", Mat4::Orthographic(0, GAME_SIZE[0], 0, GAME_SIZE[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("textColor", Color::white());
 
@@ -486,5 +483,6 @@ void Renderer::combinedPass(double dt) {
 hg::graphics::RawTexture<GL_RGBA32F> *Renderer::getRender() {
     return m_renderPasses.get(RenderMode::Combined)->texture.get();
 }
+
 
 

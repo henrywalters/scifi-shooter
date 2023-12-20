@@ -52,12 +52,15 @@ public:
     void onInit() override;
 
     void onBeforeUpdate() override;
-    void onUpdate(double dt) override;
+    void onRender(double dt) override;
     void onFixedUpdate(double dt) override;
     void onAfterUpdate() override;
 
     void setCameraPosition(hg::Vec3 pos);
-    hg::Vec2 getMousePos(hg::Vec2 rawMousePos);
+
+    // Set the mouse pos in screen coordinates in the range of [0, 1]
+    void setRawMousePos(hg::Vec2 rawMousePos);
+    hg::Vec2 getMousePos() const;
 
     void setLaserPointer(hg::Vec3 start, hg::Vec3 end);
     void setCrossHair(hg::Vec2 pos, float innerRadius, float outerRadius);
@@ -67,6 +70,8 @@ public:
     hg::graphics::RawTexture<GL_RGBA32F>* getRender();
 
 private:
+
+    hg::Vec2 m_mousePos;
 
     bool m_editorMode;
 

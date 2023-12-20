@@ -115,9 +115,7 @@ void Player::onUpdate(double dt) {
 
     Renderer* renderer = scene->getSystem<Renderer>();
 
-    auto rawMousePos = m_window->input.keyboardMouse.mouse.position;
-    rawMousePos[1] = m_window->size()[1] - rawMousePos[1];
-    m_mousePos = renderer->getMousePos(rawMousePos);
+    m_mousePos = renderer->getMousePos();
 
     Vec2 laserHit;
     Vec3 gunPos = player->position() + player->children()[0]->rotation().rotatePoint(Vec3(30, -15, 0));

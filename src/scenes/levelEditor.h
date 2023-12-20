@@ -32,6 +32,7 @@
 #include "../common/console.h"
 
 #include "../levelEditor/tools/tool.h"
+#include "editorRuntime.h"
 
 const std::string LEVEL_EXT = ".hgs";
 
@@ -40,7 +41,6 @@ public:
 
     LevelEditor(hg::graphics::Window* window):
         m_window(window),
-        m_state(std::make_unique<GameState>(TILE_SIZE)),
         hg::Scene()
     {}
 
@@ -54,19 +54,20 @@ protected:
 
 private:
 
+    EditorRuntime* m_runtime;
+    hg::utils::MultiConfig m_runtimeData;
+    bool m_playing = false;
+
+    hg::Rect m_renderRect;
+
     EntityTree m_entityTree;
     hg::Entity* m_selectedEntity = nullptr;
 
     hg::graphics::Window* m_window;
-    std::unique_ptr<Console> m_console;
-    std::unique_ptr<GameState> m_state;
 
     hg::Vec2 m_rawMousePos;
     hg::Vec2 m_mousePos;
     hg::Vec2 m_snapSize = hg::Vec2(20);
-
-    std::vector<std::unique_ptr<Tool>> m_tools;
-    Tool* m_tool = nullptr;
 
     hg::CppLibraryWrapper* m_scripts;
 
@@ -84,11 +85,14 @@ private:
     void renderAssetWindow(double dt);
     void renderRenderWindow(double dt);
 
-    void reset();
+    void newScene();
     void saveAs();
     void saveToDisc();
     void loadFromDisc();
 
+    void play();
+    void pause();
+    void reset();
 
 };
 
