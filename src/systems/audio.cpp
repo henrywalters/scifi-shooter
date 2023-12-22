@@ -18,9 +18,46 @@ AudioSystem::AudioSystem()
 }
 
 void AudioSystem::onUpdate(double dt) {
-    scene->entities.forEach<hg::audio::SourceComponent>([&](auto source, auto entity) {
+    scene->entities.forEach<hg::audio::SourceComponent>([&](SourceComponent* source, auto entity) {
 
+        if (!hg::hasAudioSource(source->streamName)) {
+            std::cout << "Audio source does not exist: " << source->streamName << "\n";
+            return;
+        }
+
+        if (m_sources.find(source->id()) == m_sources.end()) {
+            m_sources.insert(std::make_pair(source->id(), addSource((AudioChannel) source->channel, source->streamName)));
+        }
+        auto audioSource = m_sources[source->id()];
+
+        auto player = m_players[audioSource.channel].get();
+        auto rawSource = player->getSource(audioSource.id);
+
+        if (!rawSource) { // Source event hasn't been processed yet!
+            return;
+        }
+
+        auto settings = rawSource->settings();
+
+        if (source->pitch != settings.pitch || source->gain != settings.gain) {
+            player->updateSource(audioSource.id, source->pitch, source->gain);
+        }
+        if (source->velocity != settings.velocity || entity->position() != settings.position) {
+            player->updateSource(audioSource.id, source->velocity, entity->position());
+        }
+
+        if (source->playOnStart) {
+            player->playSource(m_sources[source->id()].id);
+        }
     });
+}
+
+std::optional<AudioSource> AudioSystem::getSource(hg::Entity *entity) {
+    auto source = entity->getComponent<SourceComponent>();
+    if (!source) {
+        return std::nullopt;
+    }
+    return m_sources[source->id()];
 }
 
 hg::audio::buffer_t AudioSystem::getBuffer(AudioChannel channel, std::string stream) {
@@ -35,37 +72,24 @@ hg::audio::buffer_t AudioSystem::getBuffer(AudioChannel channel, std::string str
     return m_buffers[channel][stream];
 }
 
-void AudioSystem::addSource(hg::Entity* entity, AudioChannel channel, std::string stream) {
-    auto sourceC = entity->addComponent<hg::audio::SourceComponent>();
+AudioSource AudioSystem::addSource(AudioChannel channel, std::string stream) {
+    AudioSource source;
     auto buffer = getBuffer(channel, stream);
-    auto source = m_players[channel]->addSource(entity->position());
-    sourceC->channel = (int) channel;
-    sourceC->source = source;
-    sourceC->buffer = buffer;
-    m_players[channel]->bindBuffer(buffer, source);
+    source.id = m_players[channel]->addSource();
+    source.channel = channel;
+    m_players[channel]->bindBuffer(buffer, source.id);
+    return source;
 }
 
-void AudioSystem::playSource(hg::Entity *entity) {
-    auto sourceC = entity->getComponent<SourceComponent>();
-    if (!sourceC) {
-        return;
-    }
-    m_players[(AudioChannel) sourceC->channel]->playSource(sourceC->source);
+void AudioSystem::playSource(AudioSource source) const {
+    m_players.at((AudioChannel) source.channel)->playSource(source.id);
 }
 
-void AudioSystem::updateSource(hg::Entity *entity, std::string stream) {
-    auto sourceC = entity->getComponent<SourceComponent>();
-    if (!sourceC) {
-        return;
-    }
-    auto buffer = getBuffer((AudioChannel)sourceC->channel, stream);
-    m_players[(AudioChannel)sourceC->channel]->bindBuffer(buffer, sourceC->source);
+void AudioSystem::updateSource(AudioSource source, std::string stream) {
+    auto buffer = getBuffer((AudioChannel)source.channel, stream);
+    m_players[(AudioChannel)source.channel]->bindBuffer(buffer, source.id);
 }
 
-void AudioSystem::setSourcePosition(hg::Entity *entity, hg::Vec3 pos, hg::Vec3 velocity) {
-    auto sourceC = entity->getComponent<SourceComponent>();
-    if (!sourceC) {
-        return;
-    }
-    m_players[(AudioChannel)sourceC->channel]->updateSource(sourceC->source, pos, velocity);
+void AudioSystem::setSourcePosition(AudioSource source, hg::Vec3 pos, hg::Vec3 velocity) {
+    m_players[(AudioChannel)source.channel]->updateSource(source.id, pos, velocity);
 }

@@ -19,6 +19,6 @@ protected:
     OBJECT_NAME(Item);
 };
 
-HG_COMPONENT(Core, Item)
+HG_COMPONENT(Game, Item)
 
 #endif //SCIFISHOOTER_ITEM_H

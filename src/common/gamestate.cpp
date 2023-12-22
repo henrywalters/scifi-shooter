@@ -50,6 +50,10 @@ bool GameState::canSee(const Vec2 &pos, hg::Entity *entity) {
 }
 
 std::optional<Entity *> GameState::raycast(math::Ray ray, Vec2& pos, std::vector<hg::Entity*> ignore) {
+
+    // TODO: Fix this without the assumption that there is always a tilemap
+    return std::nullopt;
+
     float tileT;
     float entityT;
 

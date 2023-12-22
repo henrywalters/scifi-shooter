@@ -19,6 +19,7 @@ public:
         AddChildTo,
         RemoveEntity,
         SelectEntity,
+        DuplicateEntity,
     };
 
     struct Event {

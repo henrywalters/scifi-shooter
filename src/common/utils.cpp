@@ -32,11 +32,11 @@ Entity* AddActor(hg::Scene* scene, hg::Vec3 pos, std::string texture, hg::Vec2 s
     auto controller = entity->addComponent<TopDownPlayerController>();
     controller->maxSpeed = maxSpeed;
 
-    auto healthBar = entity->addComponent<hg::HealthBar>();
+    //auto healthBar = entity->addComponent<hg::HealthBar>();
 
-    healthBar->health = health;
-    healthBar->maxHealth = maxHealth;
-    healthBar->offset = hg::Vec2(size.x() * -0.5, size.y());
+    //healthBar->health = health;
+    //healthBar->maxHealth = maxHealth;
+    //healthBar->offset = hg::Vec2(size.x() * -0.5, size.y());
 
     return entity;
 }

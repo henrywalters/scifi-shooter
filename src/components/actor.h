@@ -17,9 +17,6 @@ public:
 
     std::function<void()> onDeath = []() {};
 
-    int level = 1;
-    int exp = 0;
-
     float maxHealth = 100.0f;
     float health = 100.0f;
     float fov = M_PI - M_PI / 8.0;
@@ -44,5 +41,9 @@ protected:
 };
 
 HG_COMPONENT(Core, Actor)
+HG_FIELD(Actor, float, maxHealth)
+HG_FIELD(Actor, float, health)
+HG_FIELD(Actor, float, fov)
+HG_FIELD(Actor, hg::Vec2, size)
 
 #endif //SCIFISHOOTER_ACTOR_H

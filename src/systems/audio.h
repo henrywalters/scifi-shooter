@@ -5,6 +5,7 @@
 #ifndef SCIFISHOOTER_AUDIO_H
 #define SCIFISHOOTER_AUDIO_H
 
+#include <optional>
 #include <hagame/core/system.h>
 #include <hagame/audio/player.h>
 #include <hagame/core/entity.h>
@@ -16,24 +17,32 @@ enum class AudioChannel {
     Sfx,
 };
 
+struct AudioSource {
+    AudioChannel channel;
+    hg::audio::source_t id;
+};
+
 class AudioSystem : public hg::System {
 public:
 
     AudioSystem();
 
-    // Add a SourceComponent to an entity and set it up to play a stream
-    void addSource(hg::Entity* entity, AudioChannel channel, std::string stream);
+    // Fetch an AudioSource from an entity, if it exists
+    std::optional<AudioSource> getSource(hg::Entity* entity);
+
+    // Create a new Audio Source that can play a stream
+    AudioSource addSource(AudioChannel channel, std::string stream);
 
     // Checks if buffer exists in channel, and adds it if necessary
     hg::audio::buffer_t getBuffer(AudioChannel channel, std::string stream);
 
     // Set a source to play a different audio stream
-    void updateSource(hg::Entity* entity, std::string stream);
+    void updateSource(AudioSource source, std::string stream);
 
-    void setSourcePosition(hg::Entity* entity, hg::Vec3 pos, hg::Vec3 velocity);
+    void setSourcePosition(AudioSource source, hg::Vec3 pos, hg::Vec3 velocity);
 
     // Play an audio source!
-    void playSource(hg::Entity* entity);
+    void playSource(AudioSource source) const;
 
     void onUpdate(double dt);
 
@@ -41,6 +50,8 @@ private:
 
     std::unordered_map<AudioChannel, std::unique_ptr<hg::audio::Player>> m_players;
     std::unordered_map<AudioChannel, std::unordered_map<std::string, hg::audio::buffer_t>> m_buffers;
+
+    std::unordered_map<hg::utils::uuid_t, AudioSource> m_sources;
 };
 
 #endif //SCIFISHOOTER_AUDIO_H

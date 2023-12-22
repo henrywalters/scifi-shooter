@@ -52,8 +52,10 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
     aPlayer->triggerImmediately("player/" + this->settings.name + "/shoot");
 
     auto audio = runtime->getSystem<AudioSystem>();
-    audio->setSourcePosition(source, source->position(), hg::Vec3::Zero());
-    audio->playSource(source);
+    auto audioSource = audio->getSource(source);
+    if (audioSource.has_value()) {
+        audio->playSource(audioSource.value());
+    }
 
     for (int i = 0; i < m_shotsPerCast; i++) {
         float spread = rand.real<float>(-m_spread, m_spread);

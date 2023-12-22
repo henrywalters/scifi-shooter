@@ -13,9 +13,11 @@
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
 #include <hagame/graphics/resolution.h>
+#include <hagame/audio/components/source.h>
 #include "../scenes/runtime.h"
 #include "../components/item.h"
 #include "../components/light.h"
+#include "../components/startPoint.h"
 #include "../scifiGame.h"
 
 using namespace hg;
@@ -37,7 +39,9 @@ Renderer::Renderer(Window* window, GameState* state, bool editorMode):
     m_light({}, Vec3::Zero(), 1000),
     m_lightMesh(&m_light),
     //m_quadMesh(&m_quad),
-    m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>())
+    m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>()),
+    m_startQuad(Vec2(1, 1), Vec2(-0.5, -0.5)),
+    m_startMesh(&m_startQuad)
 {
     m_displayQuad.centered(false);
     m_mesh.update(&m_displayQuad);
@@ -83,8 +87,6 @@ void Renderer::onInit() {
     m_renderPasses.create(RenderMode::Debug, GAME_SIZE);
     m_renderPasses.create(RenderMode::UI, GAME_SIZE);
     m_renderPasses.create(RenderMode::Combined, GAME_SIZE);
-
-    m_aspectRatio = (float) GAME_SIZE[0] / GAME_SIZE[1];
 
     auto colorShader = getShader("color");
     auto textShader = getShader(TEXT_SHADER.name);
@@ -221,22 +223,13 @@ void Renderer::colorPass(double dt) {
     m_batchRenderer.quads.clear();
     m_batchRenderer.sprites.clear();
 
-    //std::vector<Quad> quads;
-
     scene->entities.forEach<Quad>([&](auto quad, auto entity) {
-        //quads.push_back(*quad);
         m_batchRenderer.quads.batch(entity, quad);
     });
 
     scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
         m_batchRenderer.sprites.batch(entity, sprite);
     });
-
-    //m_quadBuffer->bind();
-    //m_quadBuffer->resize(quads.size());
-    //m_quadBuffer->update(0, quads);
-
-    //m_quadMesh.getVAO()->bind();
 
     shader = getShader("batch_color");
     shader->use();
@@ -251,35 +244,6 @@ void Renderer::colorPass(double dt) {
     shader->setMat4("view", m_camera.view());
 
     m_batchRenderer.sprites.render();
-
-    //glDrawArraysInstanced(GL_TRIANGLES, 0, m_quadMesh.size(), quads.size());
-
-    //m_quadBuffer->unbind();
-
-    /*
-
-    scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
-        shader->setMat4("model", entity->model());
-        getTexture(sprite->texture)->bind();
-        sprite->mesh()->render();
-    });
-
-    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto sprites, auto entity) {
-        sprites->update(dt);
-        shader->setMat4("model", entity->model());
-        SpriteSheet* sheet = (SpriteSheet*) sprites->player->get();
-        if (!sheet) {
-            return;
-        }
-        auto rect = sheet->getRect();
-        sprites->quad->texOffset(rect.pos);
-        sprites->quad->texSize(rect.size);
-        sprites->mesh()->update(sprites->quad.get());
-        sheet->texture()->bind();
-        sprites->mesh()->render();
-    });
-
-     */
 
     scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
         Vec3 dir = actor->direction.resize<3>().normalized();
@@ -305,10 +269,6 @@ void Renderer::colorPass(double dt) {
     shader->setMat4("view", m_camera.view());
 
     m_state->tilemap->render(TileMode::Color, shader);
-
-//    scene->entities.forEach<HealthBar>([&](HealthBar* health, hg::Entity* entity) {
-//        health->render(getShader("color"));
-//    });
 
     shader = getShader(PARTICLE_SHADER.name);
     shader->use();
@@ -365,8 +325,22 @@ void Renderer::debugPass(double dt) {
     shader->setMat4("projection", Mat4::Orthographic(0, GAME_SIZE[0], 0, GAME_SIZE[1], -100, 100));
     shader->setMat4("model", Mat4::Identity());
 
-    ScifiGame* game = (ScifiGame*) scene->game();
-    // game->console->render();
+    shader = getShader(TEXTURE_SHADER.name);
+    shader->use();
+    shader->setMat4("view",  m_camera.view());
+    shader->setMat4("projection", m_camera.projection());
+    getTexture("ui/flag")->bind();
+
+    scene->entities.forEach<StartPoint>([&](auto start, auto entity) {
+        shader->setMat4("model", entity->model());
+        m_startMesh.render();
+    });
+
+    getTexture("ui/audio")->bind();
+    scene->entities.forEach<hg::audio::SourceComponent>([&](auto source, hg::Entity* entity) {
+        shader->setMat4("model", entity->model());
+        m_startMesh.render();
+    });
 
     m_renderPasses.render(RenderMode::Debug, 1);
 }

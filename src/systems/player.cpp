@@ -33,11 +33,11 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(64, 64), 500);
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 500);
     player->addComponent<LightComponent>();
     auto rect = player->addComponent<hg::math::components::RectCollider>();
-    rect->pos = Vec2(-32, -32);
-    rect->size = Vec2(64, 64);
+    rect->pos = Vec2(-0.5, -0.5);
+    rect->size = Vec2(1, 1);
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
@@ -46,7 +46,9 @@ void Player::spawn(hg::Vec2 pos) {
     pickUpWeapon((WeaponItemDef*) weapon, 36);
 
     auto audio = scene->getSystem<AudioSystem>();
-    audio->addSource(player, AudioChannel::Sfx, ((WeaponItemDef*)weapon)->shootSound);
+    auto audioSource = player->addComponent<hg::audio::SourceComponent>();
+    audioSource->channel = (int )AudioChannel::Sfx;
+    audioSource->streamName = ((WeaponItemDef*)weapon)->shootSound;
 
     player->getComponent<Actor>()->onDeath = [&]() {
         spawn(Vec2::Zero());
@@ -101,6 +103,10 @@ void Player::onInit() {
 }
 
 void Player::onUpdate(double dt) {
+
+    if (!player) {
+        return;
+    }
 
     utils::Profiler::Start("Player::onUpdate");
 
@@ -174,6 +180,10 @@ void Player::ui() {
 }
 
 void Player::onFixedUpdate(double dt) {
+
+    if (!player) {
+        return;
+    }
 
     if (m_state->paused) {
         return;

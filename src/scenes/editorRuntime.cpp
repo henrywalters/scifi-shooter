@@ -18,7 +18,7 @@ using namespace hg::utils;
 void EditorRuntime::onInit() {
     m_state->scene = this;
 
-    //addSystem<AudioSystem>();
+    addSystem<AudioSystem>();
     //addSystem<Actors>(m_state.get());
     addSystem<Renderer>(m_window, m_state.get());
     //addSystem<Enemies>(m_state.get());

@@ -65,6 +65,6 @@ protected:
 
 };
 
-HG_COMPONENT(Core, Prop)
+HG_COMPONENT(Game, Prop)
 
 #endif //SCIFISHOOTER_PROP_H

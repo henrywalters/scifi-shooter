@@ -19,13 +19,14 @@ void EntityTree::renderTree(hg::Scene* scene, hg::Entity* entity, bool root) {
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
 
-    if (entity == m_selected) {
+    if (m_selected && entity->id() == m_selected->id()) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
     bool open = ImGui::TreeNodeEx(entity->name.c_str(), flags);
 
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+        m_selected = entity;
         events.emit(EventTypes::SelectEntity, Event{entity, nullptr});
     }
     if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
@@ -35,6 +36,10 @@ void EntityTree::renderTree(hg::Scene* scene, hg::Entity* entity, bool root) {
     if (ImGui::BeginPopup(std::to_string(entity->id()).c_str())) {
         if (ImGui::Button("Add Child")) {
             events.emit(EventTypes::AddChild, {entity, nullptr});
+        }
+
+        if (ImGui::Button("Duplicate")) {
+            events.emit(EventTypes::DuplicateEntity, {entity, nullptr});
         }
 
         if (!root && ImGui::Button("Delete")) {

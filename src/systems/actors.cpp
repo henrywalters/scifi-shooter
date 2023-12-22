@@ -40,7 +40,7 @@ void Actors::onFixedUpdate(double dt) {
 
         Rect rect(entity->transform.position.resize<2>() - actor->size * 0.5, actor->size);
 
-        vel = m_state->tilemap->resolveCollisions(0, rect, vel, dt);
+        // vel = m_state->tilemap->resolveCollisions(0, rect, vel, dt);
 
         controller->velocity(vel);
 

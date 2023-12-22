@@ -29,8 +29,8 @@ extern "C" {
         initTime += dt;
         for (const auto& entity : scene->entities.root->children()) {
             if (entity->name.substr(0, 8) == "RotateMe") {
-                entity->transform.rotation = Quat(initTime * -1, Vec3::Face());
-                entity->transform.position = Vec3(cos(initTime) * 10, sin(initTime) * 10, 0);
+                entity->transform.rotation = Quat(initTime * sin(initTime / 4) * 2, Vec3::Face());
+                entity->transform.position = Vec3(tan(initTime) * 2, sin(initTime) * 2, 0);
 
                 for (const auto& child : entity->children()) {
                     child->transform.rotation = Quat(dt, Vec3::Face()) * child->transform.rotation;

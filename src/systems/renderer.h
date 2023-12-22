@@ -81,16 +81,10 @@ private:
 
     hg::graphics::RawTexture<GL_R16F, GL_FLOAT, GL_RED> m_lightTexture;
 
-    //std::unique_ptr<hg::graphics::VertexBuffer<hg::graphics::Quad>> m_quadBuffer;
-    //hg::graphics::primitives::Quad m_quad;
-    //hg::graphics::MeshInstance m_quadMesh;
-
     hg::graphics::BatchRenderer m_batchRenderer;
 
     hg::graphics::Window* m_window;
     GameState* m_state;
-
-    float m_aspectRatio;
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
 
@@ -114,6 +108,9 @@ private:
 
     std::array<hg::graphics::primitives::Quad, 4> m_crossHairQuads;
     std::array<std::unique_ptr<hg::graphics::MeshInstance>, 4> m_crossHairMeshes;
+
+    hg::graphics::primitives::Quad m_startQuad;
+    hg::graphics::MeshInstance m_startMesh;
 
     void colorPass(double dt);
     void lightPass(double dt);

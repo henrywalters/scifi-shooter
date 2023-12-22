@@ -8,6 +8,8 @@
 #include "../systems/renderer.h"
 #include "../levelEditor/tools/tilemapTool.h"
 #include "../levelEditor/scriptExplorer.h"
+#include "../components/startPoint.h"
+#include "../systems/player.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -38,6 +40,17 @@ void LevelEditor::onInit() {
             return; // Cant add a parent to its own child
         }
         e.target->addChild(e.entity);
+    });
+
+    m_entityTree.events.subscribe(EntityTree::EventTypes::DuplicateEntity, [&](EntityTree::Event e) {
+        auto entity = m_runtime->entities.add((hg::Entity*) e.entity->parent());
+        entity->transform = e.entity->transform;
+        for (const auto& component : e.entity->components()) {
+            auto newComponent = ComponentFactory::Attach(entity, component->className());
+            for (const ComponentFactory::ComponentField& field : ComponentFactory::GetFields(component->className())) {
+                field.setter(newComponent, field.getter(component));
+            }
+        }
     });
 
     m_scripts = CppLibraryManager::Register(
@@ -310,6 +323,24 @@ void LevelEditor::renderSettingsWindow(double dt) {
 
 void LevelEditor::play() {
     if (!m_playing) {
+
+        Vec2 startPos;
+
+        int startPointCount = 0;
+
+        m_runtime->entities.forEach<StartPoint>([&](auto start, Entity* entity) {
+            startPos = entity->transform.position.resize<2>();
+            startPointCount++;
+        });
+
+        if (startPointCount == 0) {
+            std::cout << "WARNING: No Start Point. Add it as a component\n";
+        } else if (startPointCount > 1) {
+            std::cout << "WARNING: Multiple Start Points found. A random one will be chosen!\n";
+        }
+
+        // m_runtime->getSystem<Player>()->spawn(startPos);
+
         m_playing = true;
         m_runtimeData = m_runtime->save();
     }
