@@ -46,12 +46,20 @@ public:
 
     void onUpdate(double dt);
 
+    void play();
+
+    void pause();
+
+    void stop();
+
 private:
 
     std::unordered_map<AudioChannel, std::unique_ptr<hg::audio::Player>> m_players;
     std::unordered_map<AudioChannel, std::unordered_map<std::string, hg::audio::buffer_t>> m_buffers;
 
     std::unordered_map<hg::utils::uuid_t, AudioSource> m_sources;
+
+    bool m_played = false;
 };
 
 #endif //SCIFISHOOTER_AUDIO_H

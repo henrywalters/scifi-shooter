@@ -10,6 +10,7 @@
 #include "../levelEditor/scriptExplorer.h"
 #include "../components/startPoint.h"
 #include "../systems/player.h"
+#include "../systems/audio.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -65,7 +66,12 @@ void LevelEditor::onInit() {
     m_runtime->m_state->params.debugRender = true;
     m_runtime->m_state->useLighting = false;
 
-    pause();
+    m_runtime->events.subscribe([&](SceneEvent e) {
+        if (e == SceneEvent::Initialized) {
+            pause();
+        }
+    });
+
 }
 
 void LevelEditor::onUpdate(double dt) {
@@ -339,20 +345,23 @@ void LevelEditor::play() {
             std::cout << "WARNING: Multiple Start Points found. A random one will be chosen!\n";
         }
 
-        // m_runtime->getSystem<Player>()->spawn(startPos);
-
         m_playing = true;
         m_runtimeData = m_runtime->save();
+    } else {
+        m_runtime->getSystem<AudioSystem>()->play();
     }
+
     m_runtime->active(true);
 }
 
 void LevelEditor::pause() {
+    m_runtime->getSystem<AudioSystem>()->pause();
     m_runtime->active(false);
 }
 
 void LevelEditor::reset() {
     if (m_playing) {
+        m_runtime->getSystem<AudioSystem>()->stop();
         m_runtime->active(false);
         m_playing = false;
         m_selectedEntity = nullptr;
