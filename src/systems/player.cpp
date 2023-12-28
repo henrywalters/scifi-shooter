@@ -46,7 +46,7 @@ void Player::spawn(hg::Vec2 pos) {
     pickUpWeapon((WeaponItemDef*) weapon, 36);
 
     auto audio = scene->getSystem<AudioSystem>();
-    auto audioSource = player->addComponent<hg::audio::SourceComponent>();
+    auto audioSource = player->addComponent<hg::audio::AudioSource>();
     audioSource->channel = (int )AudioChannel::Sfx;
     audioSource->streamName = ((WeaponItemDef*)weapon)->shootSound;
 

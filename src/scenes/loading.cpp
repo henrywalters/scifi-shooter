@@ -46,6 +46,7 @@ void Loading::onInit() {
     loadShader("combined", "shaders/combined.vert", "shaders/combined.frag");
     loadShader("batch_color", "shaders/batch_color.vert", "shaders/batch_color.frag");
     loadShader("batch_texture", "shaders/batch_texture.vert", "shaders/batch_texture.frag");
+    loadShader("grid", "shaders/grid.vert", "shaders/grid.frag");
 
     setMissingTexture("textures/missing.png");
     loadTexture("logo", "textures/hg_studio.png");

@@ -20,7 +20,7 @@ struct GameState {
     bool paused = false;
     bool menuOpen = false;
     int wave = 0;
-    float zoom = 0.8f;
+    float zoom = 1.0f;
     float pixelsPerMeter = 64;
     hg::Scene* scene;
     hg::utils::Random random;

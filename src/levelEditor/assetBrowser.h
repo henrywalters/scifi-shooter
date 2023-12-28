@@ -7,11 +7,22 @@
 
 #include <hagame/graphics/texture.h>
 #include <hagame/utils/file.h>
+#include <hagame/utils/pubsub.h>
 #include <vector>
 #include <string>
 
 class AssetBrowser {
 public:
+
+    enum class EventType {
+        Selected,
+    };
+
+    struct Event {
+        hg::utils::FileParts file;
+    };
+
+    hg::Publisher<EventType, Event> events;
 
     void render();
 

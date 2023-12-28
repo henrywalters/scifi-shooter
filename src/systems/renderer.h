@@ -5,6 +5,8 @@
 #ifndef SCIFISHOOTER_RENDERER_H
 #define SCIFISHOOTER_RENDERER_H
 
+#include <deque>
+
 #include <hagame/core/system.h>
 #include <hagame/core/scene.h>
 #include <hagame/core/assets.h>
@@ -56,6 +58,13 @@ public:
     void onFixedUpdate(double dt) override;
     void onAfterUpdate() override;
 
+    void addOverlay(RenderMode mode, std::function<void()> overlay) {
+        if (m_overlays.find(mode) == m_overlays.end()) {
+            m_overlays.insert(std::make_pair(mode, std::deque<std::function<void()>>()));
+        }
+        m_overlays[mode].push_back(overlay);
+    }
+
     void setCameraPosition(hg::Vec3 pos);
 
     // Set the mouse pos in screen coordinates in the range of [0, 1]
@@ -74,6 +83,8 @@ public:
     hg::graphics::RawTexture<GL_RGBA32F>* getRender();
 
 private:
+
+    std::unordered_map<RenderMode, std::deque<std::function<void()>>> m_overlays;
 
     hg::Vec2 m_mousePos;
 
@@ -117,6 +128,16 @@ private:
     void debugPass(double dt);
     void uiPass(double dt);
     void combinedPass(double dt);
+
+    void processOverlays(RenderMode mode) {
+        if (m_overlays.find(mode) != m_overlays.end()) {
+            while (m_overlays[mode].size() > 0) {
+                auto overlay = m_overlays[mode].front();
+                overlay();
+                m_overlays[mode].pop_front();
+            }
+        }
+    }
 };
 
 #endif //SCIFISHOOTER_RENDERER_H

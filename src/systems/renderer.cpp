@@ -280,6 +280,8 @@ void Renderer::colorPass(double dt) {
         emitter->render(shader);
     });
 
+    processOverlays(RenderMode::Color);
+
     m_renderPasses.render(RenderMode::Color, 1);
 }
 
@@ -304,6 +306,8 @@ void Renderer::lightPass(double dt) {
 
         light->mesh.render();
     });
+
+    processOverlays(RenderMode::Lighting);
 
     m_renderPasses.render(RenderMode::Lighting, 1);
 }
@@ -337,10 +341,12 @@ void Renderer::debugPass(double dt) {
     });
 
     getTexture("ui/audio")->bind();
-    scene->entities.forEach<hg::audio::SourceComponent>([&](auto source, hg::Entity* entity) {
+    scene->entities.forEach<hg::audio::AudioSource>([&](auto source, hg::Entity* entity) {
         shader->setMat4("model", entity->model());
         m_startMesh.render();
     });
+
+    processOverlays(RenderMode::Debug);
 
     m_renderPasses.render(RenderMode::Debug, 1);
 }
@@ -408,6 +414,8 @@ void Renderer::uiPass(double dt) {
     m_weapon.render();
     m_ammo.render();
     // m_enemies.render();
+
+    processOverlays(RenderMode::UI);
 
     m_renderPasses.render(RenderMode::UI, 1);
 }

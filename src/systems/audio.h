@@ -17,47 +17,56 @@ enum class AudioChannel {
     Sfx,
 };
 
-struct AudioSource {
-    AudioChannel channel;
-    hg::audio::source_t id;
-};
+
 
 class AudioSystem : public hg::System {
 public:
 
+    struct Source {
+        AudioChannel channel;
+        hg::audio::source_t id;
+    };
+
     AudioSystem();
 
+    void onUpdate(double dt);
+
+    // Play all audio sources
+    void play();
+
+    // Pause all audio sources
+    void pause();
+
+    // Stop all audio sources
+    void stop();
+
+    // Play an audio source attached to an entity
+    void play(hg::Entity* entity);
+
+private:
+
+
     // Fetch an AudioSource from an entity, if it exists
-    std::optional<AudioSource> getSource(hg::Entity* entity);
+    std::optional<Source> getSource(hg::Entity* entity);
 
     // Create a new Audio Source that can play a stream
-    AudioSource addSource(AudioChannel channel, std::string stream);
+    Source addSource(AudioChannel channel, std::string stream);
 
     // Checks if buffer exists in channel, and adds it if necessary
     hg::audio::buffer_t getBuffer(AudioChannel channel, std::string stream);
 
     // Set a source to play a different audio stream
-    void updateSource(AudioSource source, std::string stream);
+    void updateSource(Source source, std::string stream);
 
-    void setSourcePosition(AudioSource source, hg::Vec3 pos, hg::Vec3 velocity);
+    void setSourcePosition(Source source, hg::Vec3 pos, hg::Vec3 velocity);
 
     // Play an audio source!
-    void playSource(AudioSource source) const;
-
-    void onUpdate(double dt);
-
-    void play();
-
-    void pause();
-
-    void stop();
-
-private:
+    void playSource(Source source) const;
 
     std::unordered_map<AudioChannel, std::unique_ptr<hg::audio::Player>> m_players;
     std::unordered_map<AudioChannel, std::unordered_map<std::string, hg::audio::buffer_t>> m_buffers;
 
-    std::unordered_map<hg::utils::uuid_t, AudioSource> m_sources;
+    std::unordered_map<hg::utils::uuid_t, Source> m_sources;
 
     bool m_played = false;
 };

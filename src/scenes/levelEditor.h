@@ -39,12 +39,12 @@ const std::string LEVEL_EXT = ".hgs";
 class LevelEditor : public hg::Scene {
 public:
 
+    const float BUTTON_HEIGHT = 24.0f;
+
     LevelEditor(hg::graphics::Window* window):
         m_window(window),
         hg::Scene()
     {}
-
-    void selectTool(Tool* tool);
 
 protected:
 
@@ -58,6 +58,8 @@ private:
     hg::utils::MultiConfig m_runtimeData;
     bool m_playing = false;
 
+    std::vector<std::unique_ptr<Tool>> m_tools;
+
     hg::Rect m_renderRect;
 
     EntityTree m_entityTree;
@@ -68,6 +70,9 @@ private:
     hg::Vec2 m_rawMousePos;
     hg::Vec2 m_mousePos;
     hg::Vec2 m_snapSize = hg::Vec2(20);
+
+    float m_panSpeed = 1.0;
+    float m_zoomSpeed = 100;
 
     hg::CppLibraryWrapper* m_scripts;
 
@@ -94,6 +99,7 @@ private:
     void pause();
     void reset();
 
+    double m_elapsedTime = 0;
 };
 
 #endif //SCIFISHOOTER_LEVELEDITOR_H

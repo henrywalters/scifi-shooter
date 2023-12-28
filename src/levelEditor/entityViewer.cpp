@@ -47,9 +47,7 @@ void entityViewer(hg::Entity* entity) {
             for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
                 ImGui::PushID(index++);
 
-                if (editComponentField(component, field)) {
-                    std::cout << "Field: " << field.field << " updated\n";
-                }
+                editComponentField(component, field);
 
                 if (field.field == "texture") {
                     if (ImGui::BeginDragDropTarget()) {
@@ -63,6 +61,8 @@ void entityViewer(hg::Entity* entity) {
 
                 ImGui::PopID();
             }
+
+            component->uiUpdate();
         }
     }
 }

@@ -35,6 +35,7 @@ public:
 
 private:
 
+    bool m_dragging = false;
     hg::Entity* m_selected = nullptr;
 
 };

@@ -21,6 +21,8 @@ public:
         hg::Scene()
     {}
 
+    GameState* state() { return m_state.get(); }
+
 protected:
 
     void onInit() override;

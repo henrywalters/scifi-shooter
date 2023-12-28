@@ -2,14 +2,13 @@
 // Created by henry on 12/5/23.
 //
 #include <hagame/graphics/windows.h>
-#include <hagame/graphics/monitors.h>
 #include "imgui.h"
 #include "levelEditor.h"
 #include "../systems/renderer.h"
 #include "../levelEditor/tools/tilemapTool.h"
+#include "../levelEditor/tools/shaderTool.h"
 #include "../levelEditor/scriptExplorer.h"
 #include "../components/startPoint.h"
-#include "../systems/player.h"
 #include "../systems/audio.h"
 
 using namespace hg;
@@ -19,6 +18,9 @@ using namespace hg::graphics;
 void LevelEditor::onInit() {
 
     m_runtime = addChild<EditorRuntime>(m_window);
+
+    m_tools.push_back(std::make_unique<TilemapTool>(m_runtime));
+    m_tools.push_back(std::make_unique<ShaderTool>(m_runtime));
 
     m_entityTree.events.subscribe(EntityTree::EventTypes::SelectEntity, [&](auto e) {
         m_selectedEntity = e.entity;
@@ -76,6 +78,10 @@ void LevelEditor::onInit() {
 
 void LevelEditor::onUpdate(double dt) {
 
+    if (m_runtime->active()) {
+        m_elapsedTime += dt;
+    }
+
     m_window->clear();
 
     renderUI(game()->dt());
@@ -91,6 +97,15 @@ void LevelEditor::onUpdate(double dt) {
     renderer->setRawMousePos(m_rawMousePos);
     m_mousePos = renderer->getMousePos();
 
+    renderer->m_camera.transform.position += m_window->input.keyboardMouse.lAxis.resize<3>() * m_panSpeed * dt;
+    m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * dt * m_zoomSpeed, 0.0001, 3);
+
+    for (const auto& tool : m_tools) {
+        tool->update(m_mousePos, dt);
+        renderer->addOverlay(RenderMode::Debug, [&tool, dt]() {
+            tool->render(dt);
+        });
+    }
 }
 
 void LevelEditor::renderUI(double dt) {
@@ -105,12 +120,21 @@ void LevelEditor::renderUI(double dt) {
                 saveAs();
             }
 
-            if (m_saveFile != "" && ImGui::MenuItem("Save")) {
+            if (!m_saveFile.empty() && ImGui::MenuItem("Save")) {
                 saveToDisc();
             }
 
             if (ImGui::MenuItem("Load")) {
                 loadFromDisc();
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tools")) {
+            for (const auto& tool : m_tools) {
+                if (ImGui::MenuItem(tool->getName().c_str())) {
+                    tool->open();
+                }
             }
             ImGui::EndMenu();
         }
@@ -178,7 +202,7 @@ void LevelEditor::renderEntityWindow(double dt) {
         m_runtime->entities.add();
     }
 
-    m_entityTree.render(this, m_runtime->entities.root.get());
+    m_entityTree.render(m_runtime, m_runtime->entities.root.get());
 
     ImGui::End();
 }
@@ -270,21 +294,39 @@ void LevelEditor::onAfterUpdate() {
 void LevelEditor::renderRenderWindow(double dt) {
     ImGui::Begin("Render");
 
+    ImVec2 btnSize(24, 24);
+
+    float width = ImGui::GetContentRegionAvail().x;
+    float padding = width / 2.0 - btnSize.x - 8;
+
+    ImGui::SetCursorPosX(padding);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
+
     if (m_runtime->active()) {
-        if (ImGui::Button("Pause")) {
+        if (ImGui::ImageButton("Pause", (void*)getTexture("ui/pause")->id, btnSize)) {
             pause();
         }
     } else {
-        if (ImGui::Button("Play")) {
+        if (ImGui::ImageButton("Play", (void*)getTexture("ui/play")->id, btnSize)) {
             play();
         }
     }
 
     ImGui::SameLine();
 
-    if (ImGui::Button("Reset")) {
+    if (ImGui::ImageButton("Reset", (void*)getTexture("ui/reset")->id, btnSize)) {
         reset();
     }
+
+    ImGui::PopStyleVar(2);
+
+    ImGui::SameLine();
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << m_elapsedTime;
+    ImGui::Text(("Running for: " + ss.str() + "s").c_str());
 
     ImGui::BeginChild("RendererOutput");
     {
@@ -310,7 +352,13 @@ void LevelEditor::renderRenderWindow(double dt) {
 }
 
 void LevelEditor::renderSettingsWindow(double dt) {
+    if (!m_runtime->hasSystem<Renderer>()) {
+        return;
+    }
+
     ImGui::Begin("Settings");
+
+    auto renderer = m_runtime->getSystem<Renderer>();
 
     ImGui::SeparatorText("Stats");
     ImGui::Text(("FPS: " + std::to_string(1.0 / dt)).c_str());
@@ -320,7 +368,8 @@ void LevelEditor::renderSettingsWindow(double dt) {
     ImGui::Checkbox("Debug Render", &m_runtime->m_state->params.debugRender);
     ImGui::Checkbox("Render Lighting", &m_runtime->m_state->useLighting);
     ImGui::Checkbox("VSync", &m_runtime->m_state->params.vsync);
-    ImGui::DragFloat2("Mouse Snap", m_snapSize.vector, 1, 1);
+    ImGui::DragFloat3("Camera Pos", renderer->m_camera.transform.position.vector);
+    ImGui::DragFloat("Camera Zoom", &m_runtime->state()->zoom, 0.0001, 3, 0.001);
 
     ImGui::Text(("Window: " + m_window->size().toString() + ", " + m_window->pos().toString()).c_str());
 
@@ -361,6 +410,7 @@ void LevelEditor::pause() {
 
 void LevelEditor::reset() {
     if (m_playing) {
+        m_elapsedTime = 0;
         m_runtime->getSystem<AudioSystem>()->stop();
         m_runtime->active(false);
         m_playing = false;
