@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "componentExplorer.h"
 #include "../../thirdparty/imgui/misc/cpp/imgui_stdlib.h"
+#include "events.h"
 
 void entityViewer(hg::Entity* entity) {
     ImGui::InputText("Name", &entity->name);
@@ -28,7 +29,8 @@ void entityViewer(hg::Entity* entity) {
 
     auto addComponent = componentExplorer();
     if (addComponent.has_value()) {
-        hg::ComponentFactory::Attach(entity, addComponent.value());
+        auto component = hg::ComponentFactory::Attach(entity, addComponent.value());
+        Events()->emit(EventTypes::AddComponent, Event{ComponentEvent{entity, component->className(), ""}});
     }
 
     int index = 0;
@@ -42,12 +44,15 @@ void entityViewer(hg::Entity* entity) {
             ImGui::PushID(index++);
             if (ImGui::Button("remove")) {
                 hg::ComponentFactory::Get(component->className()).remove(entity);
+                Events()->emit(EventTypes::RemoveComponent, Event{ComponentEvent{entity, component->className(), ""}});
             }
             ImGui::PopID();
             for (const auto& field : hg::ComponentFactory::GetFields(component->className())) {
                 ImGui::PushID(index++);
 
-                editComponentField(component, field);
+                if (editComponentField(component, field)) {
+                    Events()->emit(EventTypes::UpdateComponent, Event{ComponentEvent{entity, component->className(), field.field}});
+                }
 
                 if (field.field == "texture") {
                     if (ImGui::BeginDragDropTarget()) {

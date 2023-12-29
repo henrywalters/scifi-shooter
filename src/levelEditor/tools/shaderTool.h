@@ -8,6 +8,7 @@
 #include <hagame/core/scene.h>
 #include <hagame/graphics/primitives/quad.h>
 #include <hagame/graphics/mesh.h>
+#include <optional>
 #include "tool.h"
 
 class ShaderTool : public Tool {
@@ -40,7 +41,11 @@ private:
 
     void acceptDragDrop();
 
+    void loadShader(std::string path);
+
     std::vector<std::unique_ptr<Shader>> m_shaders;
+
+    std::optional<std::string> m_error;
 
 };
 

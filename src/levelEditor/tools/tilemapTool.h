@@ -6,18 +6,32 @@
 #define SCIFISHOOTER_TILEMAPTOOL_H
 
 #include <hagame/core/scene.h>
-#include <hagame/graphics/primitives/quad.h>
+#include <hagame/graphics/primitives/grid.h>
 #include <hagame/graphics/mesh.h>
+#include <hagame/graphics/components/quad.h>
+#include <hagame/utils/spatialMap.h>
 #include "tool.h"
+#include "../../common/constants.h"
 
 class TilemapTool : public Tool {
 public:
 
     TilemapTool(hg::Scene* scene):
-        m_quad(hg::Vec2(4, 4)),
-        m_mesh(&m_quad),
+        m_gridThickness(2.0),
+        m_grid(hg::Vec2(0, 0), hg::Vec2i(0, 0), 0),
+        m_mesh(&m_grid),
+        m_quad(),
+        m_quadMesh(&m_quad),
         Tool(scene)
-    {}
+    {
+        m_grid.thickness(m_gridThickness / 64.0);
+        m_grid.cells(hg::Vec2i(100, 100));
+        m_grid.cellSize(hg::Vec2(0.0));
+        m_mesh.update(&m_grid);
+
+        m_quad.size(hg::Vec2::Zero());
+        m_quadMesh.update(&m_quad);
+    }
 
     std::string getButtonLabel() override { return "Add Tilemap"; }
     std::string getName() override { return "Tilemap Tool"; }
@@ -31,12 +45,19 @@ protected:
 
 private:
 
-    hg::graphics::primitives::Quad m_quad;
+    hg::graphics::primitives::Grid m_grid;
     hg::graphics::MeshInstance m_mesh;
 
-    float m_gridThickness = 0.1f;
-    hg::Vec2i m_gridCells = hg::Vec2i(4, 4);
+    hg::graphics::primitives::Quad m_quad;
+    hg::graphics::MeshInstance m_quadMesh;
 
+    float m_gridThickness;
+
+    hg::graphics::Color m_color;
+
+    hg::Vec2i m_mouseIndex;
+
+    hg::Entity* m_selectedEntity = nullptr;
 };
 
 #endif //SCIFISHOOTER_TILEMAPTOOL_H

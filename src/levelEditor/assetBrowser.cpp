@@ -4,6 +4,7 @@
 #include "assetBrowser.h"
 #include <hagame/core/assets.h>
 #include "imgui.h"
+#include "events.h"
 
 void AssetBrowser::render() {
     std::string path = hg::ASSET_DIR;
@@ -43,7 +44,8 @@ void AssetBrowser::render() {
         ImGui::BeginChild(file.c_str(), size, true);
         auto fileParts = hg::utils::f_getParts(file);
         if (ImGui::IsWindowHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-            events.emit(EventType::Selected, Event{fileParts});
+            auto events = Events();
+            events->emit(EventTypes::SelectAsset, Event{fileParts});
         }
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
             ImGui::SetDragDropPayload(fileParts.extension.c_str(), (void*) file.data(), sizeof(char) * file.size());

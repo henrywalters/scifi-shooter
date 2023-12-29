@@ -5,13 +5,22 @@
 #include <hagame/core/assets.h>
 #include "imgui.h"
 #include "../../thirdparty/imgui/misc/cpp/imgui_stdlib.h"
+#include "../events.h"
 
 void ShaderTool::renderOverlay() {
     Tool::renderOverlay();
 }
 
 void ShaderTool::onInit() {
-    Tool::onInit();
+    Events()->subscribe(EventTypes::SelectAsset, [&](const auto& e) {
+        AssetEvent file = std::get<AssetEvent>(e.payload);
+        if (file.extension == "glsl" || file.extension == "frag" || file.extension == "vert") {
+            if (!m_open) {
+                open();
+            }
+            loadShader(file.absolutePath());
+        }
+    });
 }
 
 void ShaderTool::renderUI(double dt) {
@@ -32,11 +41,20 @@ void ShaderTool::renderUI(double dt) {
                 std::string label = shader->file.name + "." + shader->file.extension;
                 if (ImGui::BeginTabItem(label.c_str(), &open)) {
                     if (ImGui::Button("Save & Compile")) {
-                        hg::utils::f_write(shader->file.absolutePath(), shader->contents);
-                        hg::recompileShader(shader->file.name);
+                        m_error = std::nullopt;
+                        try {
+                            hg::utils::f_write(shader->file.absolutePath(), shader->contents);
+                            hg::recompileShader(shader->file.name);
+                        } catch (std::exception& e) {
+                            m_error = e.what();
+                        }
                     }
 
                     ImGui::InputTextMultiline("Source", &shader->contents, ImGui::GetContentRegionAvail());
+
+                    if (m_error.has_value()) {
+                        ImGui::Text(("Error: " + m_error.value()).c_str());
+                    }
 
                     if (ImGui::BeginDragDropTarget()) {
                         acceptDragDrop();
@@ -68,12 +86,16 @@ void ShaderTool::acceptDragDrop() {
         const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(ext.c_str());
         if (payload) {
             auto path = std::string((char*) payload->Data);
-            m_shaders.push_back(std::make_unique<Shader>());
-            auto shader = m_shaders[m_shaders.size() - 1].get();
-            shader->file = hg::utils::f_getParts(path);
-            if (hg::utils::f_exists(shader->file.absolutePath())) {
-                shader->contents = hg::utils::f_read(shader->file.absolutePath());
-            }
+            loadShader(path);
         }
+    }
+}
+
+void ShaderTool::loadShader(std::string path) {
+    m_shaders.push_back(std::make_unique<Shader>());
+    auto shader = m_shaders[m_shaders.size() - 1].get();
+    shader->file = hg::utils::f_getParts(path);
+    if (hg::utils::f_exists(shader->file.absolutePath())) {
+        shader->contents = hg::utils::f_read(shader->file.absolutePath());
     }
 }

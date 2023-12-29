@@ -13,22 +13,6 @@
 class EntityTree {
 public:
 
-    enum class EventTypes {
-        AddEntity,
-        AddChild,
-        AddChildTo,
-        RemoveEntity,
-        SelectEntity,
-        DuplicateEntity,
-    };
-
-    struct Event {
-        hg::Entity* entity;
-        hg::Entity* target;
-    };
-
-    hg::Publisher<EventTypes, Event> events;
-
     void render(hg::Scene* scene, hg::Entity* root);
 
     void renderTree(hg::Scene* scene, hg::Entity* entity, bool root = false);

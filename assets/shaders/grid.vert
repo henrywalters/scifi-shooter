@@ -21,8 +21,8 @@ out float Thickness;
 out vec2 Cells;
 
 void main() {
-    FragPos = a_vertex;
     gl_Position = projection * view * model * vec4(a_vertex, 1.0);
+    FragPos = gl_Position.xyz;
     Normal = a_normal;
     Color = color;
     TexCoord = a_texture;

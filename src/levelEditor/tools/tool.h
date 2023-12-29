@@ -6,13 +6,16 @@
 #define SCIFISHOOTER_TOOL_H
 
 #include <hagame/core/object.h>
+#include "../entityTree.h"
 
 class Tool : public hg::Object {
 public:
 
     Tool(hg::Scene* scene):
         m_scene(scene)
-    {
+    {}
+
+    void init() {
         onInit();
     }
 

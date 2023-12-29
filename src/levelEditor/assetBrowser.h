@@ -14,16 +14,6 @@
 class AssetBrowser {
 public:
 
-    enum class EventType {
-        Selected,
-    };
-
-    struct Event {
-        hg::utils::FileParts file;
-    };
-
-    hg::Publisher<EventType, Event> events;
-
     void render();
 
 private:

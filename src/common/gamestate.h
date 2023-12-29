@@ -10,6 +10,7 @@
 #include <hagame/graphics/particleEmitter.h>
 #include <hagame/core/scene.h>
 #include <hagame/core/game.h>
+#include <hagame/utils/pubsub.h>
 #include <hagame/structures/graph.h>
 #include "runtimeParams.h"
 #include "constants.h"

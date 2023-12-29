@@ -8,6 +8,7 @@
 #include "../levelEditor/tools/tilemapTool.h"
 #include "../levelEditor/tools/shaderTool.h"
 #include "../levelEditor/scriptExplorer.h"
+#include "../levelEditor/events.h"
 #include "../components/startPoint.h"
 #include "../systems/audio.h"
 
@@ -19,36 +20,36 @@ void LevelEditor::onInit() {
 
     m_runtime = addChild<EditorRuntime>(m_window);
 
-    m_tools.push_back(std::make_unique<TilemapTool>(m_runtime));
-    m_tools.push_back(std::make_unique<ShaderTool>(m_runtime));
-
-    m_entityTree.events.subscribe(EntityTree::EventTypes::SelectEntity, [&](auto e) {
-        m_selectedEntity = e.entity;
+    Events()->subscribe(EventTypes::SelectEntity, [&](const auto& e) {
+        m_selectedEntity = std::get<EntityEvent>(e.payload).entity;
     });
 
-    m_entityTree.events.subscribe(EntityTree::EventTypes::AddChild, [&](auto e) {
-        m_runtime->entities.add(e.entity);
+    Events()->subscribe(EventTypes::AddChild, [&](const auto& e) {
+        m_runtime->entities.add(std::get<EntityEvent>(e.payload).entity);
     });
 
-    m_entityTree.events.subscribe(EntityTree::EventTypes::RemoveEntity, [&](auto e) {
-        if (e.entity == m_selectedEntity) {
+    Events()->subscribe(EventTypes::RemoveEntity, [&](const auto& e) {
+        auto payload = std::get<EntityEvent>(e.payload);
+        if (payload.entity == m_selectedEntity) {
             m_selectedEntity = nullptr;
         }
-        m_runtime->entities.remove(e.entity);
+        m_runtime->entities.remove(payload.entity);
     });
 
-    m_entityTree.events.subscribe(EntityTree::EventTypes::AddChildTo, [&](auto e) {
-        if (std::find(e.entity->children().begin(), e.entity->children().end(), e.target) !=
-            e.entity->children().end()) {
+    Events()->subscribe(EventTypes::AddChildTo, [&](const auto& e) {
+        auto payload = std::get<EntityEvent>(e.payload);
+        if (std::find(payload.entity->children().begin(), payload.entity->children().end(), payload.target) !=
+            payload.entity->children().end()) {
             return; // Cant add a parent to its own child
         }
-        e.target->addChild(e.entity);
+        payload.target->addChild(payload.entity);
     });
 
-    m_entityTree.events.subscribe(EntityTree::EventTypes::DuplicateEntity, [&](EntityTree::Event e) {
-        auto entity = m_runtime->entities.add((hg::Entity*) e.entity->parent());
-        entity->transform = e.entity->transform;
-        for (const auto& component : e.entity->components()) {
+    Events()->subscribe(EventTypes::DuplicateEntity, [&](const auto& e) {
+        auto payload = std::get<EntityEvent>(e.payload);
+        auto entity = m_runtime->entities.add((hg::Entity*) payload.entity->parent());
+        entity->transform = payload.entity->transform;
+        for (const auto& component : payload.entity->components()) {
             auto newComponent = ComponentFactory::Attach(entity, component->className());
             for (const ComponentFactory::ComponentField& field : ComponentFactory::GetFields(component->className())) {
                 field.setter(newComponent, field.getter(component));
@@ -74,6 +75,12 @@ void LevelEditor::onInit() {
         }
     });
 
+    m_tools.push_back(std::make_unique<TilemapTool>(m_runtime));
+    m_tools.push_back(std::make_unique<ShaderTool>(m_runtime));
+
+    for (const auto& tool : m_tools) {
+        tool->init();
+    }
 }
 
 void LevelEditor::onUpdate(double dt) {
@@ -97,8 +104,11 @@ void LevelEditor::onUpdate(double dt) {
     renderer->setRawMousePos(m_rawMousePos);
     m_mousePos = renderer->getMousePos();
 
-    renderer->m_camera.transform.position += m_window->input.keyboardMouse.lAxis.resize<3>() * m_panSpeed * dt;
-    m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * dt * m_zoomSpeed, 0.0001, 3);
+    if (m_rawMousePos.x() >= 0 && m_rawMousePos.x() <= 1 && m_rawMousePos.y() >= 0 && m_rawMousePos.y() <= 1.0) {
+        renderer->m_camera.transform.position += m_window->input.keyboardMouse.lAxis.resize<3>() * m_panSpeed * dt;
+        m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * dt * m_zoomSpeed, 0.0001, 3);
+    }
+
 
     for (const auto& tool : m_tools) {
         tool->update(m_mousePos, dt);

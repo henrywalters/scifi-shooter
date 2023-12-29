@@ -9,18 +9,18 @@ in float Thickness;
 in vec2 Cells;
 
 uniform sampler2D image;
-
 out vec4 FragColor;
 
 void main() {
+    vec2 uv = TexCoord * 2. - 1.;
 
-    FragColor = vec4(mod(FragPos.x, Cells.x), mod(FragPos.y, Cells.y), 0., 1.);
-    return;
+    float modX = mod(gl_FragCoord.x, 10.);
+    float modY = mod(gl_FragCoord.y, 10.);
 
-    if (mod(FragPos.x, Cells.x) < Thickness ||
-    mod(FragPos.y, Cells.y) < Thickness) {
-        FragColor = Color;
-    } else {
-        FragColor = vec4(0.);
+    if (modX < 1.) {
+       FragColor = Color;
     }
+
+    FragColor = vec4(gl_FragCoord.xy, 0., 1.0);
+
 }
