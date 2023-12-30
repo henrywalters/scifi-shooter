@@ -9,6 +9,7 @@
 #include <hagame/math/components/rectCollider.h>
 #include <hagame/math/components/circleCollider.h>
 #include <hagame/graphics/components/spriteSheetAnimator.h>
+#include <hagame/graphics/components/tilemap.h>
 #include <hagame/graphics/shaders/texture.h>
 #include <hagame/graphics/shaders/particle.h>
 #include <hagame/graphics/shaders/text.h>
@@ -229,6 +230,18 @@ void Renderer::colorPass(double dt) {
 
     scene->entities.forEach<Sprite>([&](auto sprite, auto entity) {
         m_batchRenderer.sprites.batch(entity, sprite);
+    });
+
+    scene->entities.forEach<components::Tilemap>([&](auto tilemap, auto entity) {
+        tilemap->tiles.forEach([&](hg::Vec2i index, components::Tilemap::Tile tile) {
+            if (tile.type == components::Tilemap::TileType::Color) {
+                m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * -0.5, tile.color, Mat4::Translation(tilemap->tileSize.prod(tile.index.cast<float>()).template resize<3>()));
+            }
+
+            if (tile.type == components::Tilemap::TileType::Texture) {
+                m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * -0.5, tile.color, Mat4::Translation(tilemap->tileSize.prod(tile.index.cast<float>()).template resize<3>()));
+            }
+        });
     });
 
     shader = getShader("batch_color");

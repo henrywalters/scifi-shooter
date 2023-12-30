@@ -22,6 +22,7 @@ public:
     {}
 
     GameState* state() { return m_state.get(); }
+    hg::graphics::Window* window() { return m_window; }
 
 protected:
 

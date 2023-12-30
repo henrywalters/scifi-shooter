@@ -9,6 +9,7 @@
 #include <hagame/graphics/primitives/grid.h>
 #include <hagame/graphics/mesh.h>
 #include <hagame/graphics/components/quad.h>
+#include <hagame/graphics/components/tilemap.h>
 #include <hagame/utils/spatialMap.h>
 #include "tool.h"
 #include "../../common/constants.h"
@@ -51,9 +52,12 @@ private:
     hg::graphics::primitives::Quad m_quad;
     hg::graphics::MeshInstance m_quadMesh;
 
+    bool m_renderGrid = true;
     float m_gridThickness;
+    std::string m_texture;
 
-    hg::graphics::Color m_color;
+    hg::graphics::Color m_color = hg::graphics::Color::white();
+    hg::graphics::components::Tilemap::TileType m_type;
 
     hg::Vec2i m_mouseIndex;
 

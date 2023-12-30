@@ -107,11 +107,12 @@ void LevelEditor::onUpdate(double dt) {
     if (m_rawMousePos.x() >= 0 && m_rawMousePos.x() <= 1 && m_rawMousePos.y() >= 0 && m_rawMousePos.y() <= 1.0) {
         renderer->m_camera.transform.position += m_window->input.keyboardMouse.lAxis.resize<3>() * m_panSpeed * dt;
         m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * dt * m_zoomSpeed, 0.0001, 3);
+        for (const auto& tool : m_tools) {
+            tool->update(m_mousePos, dt);
+        }
     }
 
-
     for (const auto& tool : m_tools) {
-        tool->update(m_mousePos, dt);
         renderer->addOverlay(RenderMode::Debug, [&tool, dt]() {
             tool->render(dt);
         });
