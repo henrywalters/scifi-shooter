@@ -9,11 +9,8 @@
 
 class Inventory : public hg::Component {
 public:
-
 protected:
-
     OBJECT_NAME(Inventory)
-
 };
 
 #endif //SCIFISHOOTER_INVENTORY_H

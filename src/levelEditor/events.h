@@ -8,6 +8,7 @@
 #include <hagame/utils/pubsub.h>
 #include <hagame/core/entity.h>
 #include <hagame/utils/file.h>
+#include <hagame/core/scene.h>
 
 
 enum class EventTypes {
@@ -21,6 +22,9 @@ enum class EventTypes {
     UpdateComponent,
     RemoveComponent,
     SelectAsset,
+    NewLevel,
+    LoadLevel,
+    SaveLevel,
 };
 
 struct EntityEvent {
@@ -36,8 +40,10 @@ struct ComponentEvent {
 
 using AssetEvent = hg::utils::FileParts;
 
+using LevelEvent = hg::Scene*;
+
 struct Event {
-    std::variant<EntityEvent, ComponentEvent, AssetEvent> payload;
+    std::variant<EntityEvent, ComponentEvent, AssetEvent, LevelEvent> payload;
 };
 
 hg::Publisher<EventTypes, Event>* Events();

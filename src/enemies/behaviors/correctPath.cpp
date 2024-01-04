@@ -17,9 +17,9 @@ Status CorrectPath::process(double dt, EnemyState *state, hg::utils::bt::data_co
     auto target = (hg::Entity*)GetData<void*>(ctx, (uuid_t)BTags::Target);
     auto pathEnd = GetData<Vec2>(ctx,(uuid_t)BTags::PathEnd);
 
-    if (state->game->tilemap->getIndex(target->transform.position.resize<2>()) != state->game->tilemap->getIndex(pathEnd)) {
+    //if (state->game->tilemap->getIndex(target->transform.position.resize<2>()) != state->game->tilemap->getIndex(pathEnd)) {
         SetData(ctx, (uuid_t)BTags::PathEnd, target->transform.position.resize<2>());
-    }
+    //}
 
     return Status::Success;
 }

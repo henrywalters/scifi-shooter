@@ -23,21 +23,7 @@ using namespace hg::utils::bt;
 Enemies::Enemies(GameState* state):
     m_state(state),
     m_pathfinding([&](PathFinding::Node node) {
-        std::vector<PathFinding::Node> nodes;
-
-        for (const auto& position : m_state->tilemap->getLayer(0)->getNeighbors(node.position)) {
-
-            if (m_state->tilemap->getLayer(0)->has(position)) {
-                continue;
-            }
-
-            PathFinding::Node neighbor;
-            neighbor.position = position;
-            neighbor.cost = 0;
-
-        }
-
-        return nodes;
+        return m_state->findTraversableNeighbors(node.position);
     })
 {}
 
@@ -58,7 +44,7 @@ Entity* Enemies::spawn(EnemyType type, hg::Vec3 pos) {
 
     scene->addToGroup(ENEMY_GROUP, entity);
 
-    entity->addComponent<AI>(type, m_state->tilemap.get(), m_state);
+    // entity->addComponent<AI>(type, m_state->tilemap.get(), m_state);
 
     auto coll = entity->addComponent<hg::math::components::CircleCollider>();
     coll->radius = def.size.magnitude() * 0.5;

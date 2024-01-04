@@ -41,8 +41,10 @@ Renderer::Renderer(Window* window, GameState* state, bool editorMode):
     m_lightMesh(&m_light),
     //m_quadMesh(&m_quad),
     m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>()),
-    m_startQuad(Vec2(1, 1), Vec2(-0.5, -0.5)),
-    m_startMesh(&m_startQuad)
+    m_startQuad(Vec2(1, 1)),
+    m_startMesh(&m_startQuad),
+    m_animQuad(Vec2(1, 1)),
+    m_anim(&m_animQuad)
 {
     m_displayQuad.centered(false);
     m_mesh.update(&m_displayQuad);
@@ -112,7 +114,7 @@ void Renderer::onRender(double dt) {
 
     m_camera.zoom = m_state->zoom;
 
-    m_window->color(m_state->tilemap->background);
+    m_window->color(Color::black());
 
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.clear(RenderMode::Color, Color::black());
@@ -212,7 +214,7 @@ void Renderer::colorPass(double dt) {
     for (const auto& poly : m_state->levelGeometry) {
         Color color = m_state->randomColorsLUT[pIndex++ % m_state->randomColorsLUT.size()];
         for (const auto& edge : poly) {
-            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2);
+            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2.0 / 64.0);
         }
     }
 
@@ -232,14 +234,28 @@ void Renderer::colorPass(double dt) {
         m_batchRenderer.sprites.batch(entity, sprite);
     });
 
+    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto animator, auto entity) {
+        auto animation = (hg::graphics::SpriteSheet*) animator->player->get();
+        if (animation) {
+            animation->texture()->bind();
+            shader->setMat4("model", entity->model());
+            m_animQuad.size(animation->size.cast<float>());
+            auto rect = animation->getRect();
+            m_animQuad.texSize(rect.size);
+            m_animQuad.texOffset(rect.pos);
+            m_anim.update(&m_animQuad);
+            m_anim.render();
+        }
+    });
+
     scene->entities.forEach<components::Tilemap>([&](auto tilemap, auto entity) {
-        tilemap->tiles.forEach([&](hg::Vec2i index, components::Tilemap::Tile tile) {
-            if (tile.type == components::Tilemap::TileType::Color) {
-                m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * -0.5, tile.color, Mat4::Translation(tilemap->tileSize.prod(tile.index.cast<float>()).template resize<3>()));
+        tilemap->tiles.forEach([&](hg::Vec2i index, components::Tile tile) {
+            if (tile.type == components::TileType::Color) {
+                m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, entity->model() * Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>()));
             }
 
-            if (tile.type == components::Tilemap::TileType::Texture) {
-                m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * -0.5, tile.color, Mat4::Translation(tilemap->tileSize.prod(tile.index.cast<float>()).template resize<3>()));
+            if (tile.type == components::TileType::Texture) {
+                m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, entity->model() * Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>()));
             }
         });
     });
@@ -262,26 +278,24 @@ void Renderer::colorPass(double dt) {
         Vec3 dir = actor->direction.resize<3>().normalized();
         Vec3 a = math::Quaternion<float>(actor->fov * -0.5, Vec3::Face()).rotatePoint(dir);
         Vec3 b = math::Quaternion<float>(actor->fov * 0.5, Vec3::Face()).rotatePoint(dir);
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + dir * 100), Color::blue());
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + a * 100), Color::blue());
-        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + b * 100), Color::blue());
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + dir * 100), Color::blue(), 2.0/ 64.0);
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + a * 100), Color::blue(), 2.0/ 64.0);
+        Debug::DrawLine(math::LineSegment(entity->transform.position, entity->transform.position + b * 100), Color::blue(), 2.0/ 64.0);
     });
 
     scene->entities.forEach<RectCollider>([&](RectCollider* coll, Entity* entity) {
-        Debug::DrawRect(Rect(coll->pos + entity->position().resize<2>(), coll->size), Color::blue());
+        Debug::DrawRect(Rect(coll->pos + entity->position().resize<2>(), coll->size), Color::blue(), 2.0 / 64.0);
     });
 
     scene->entities.forEach<CircleCollider>([&](CircleCollider* coll, Entity* entity) {
         Vec2 pos = entity->transform.position.resize<2>();
-        Debug::DrawCircle(pos[0] + coll->pos[0], pos[1] + coll->pos[1], coll->radius, Color::blue());
+        Debug::DrawCircle(pos[0] + coll->pos[0], pos[1] + coll->pos[1], coll->radius, Color::blue(), 2.0 / 64.0);
     });
 
     shader = getShader("color");
     shader->use();
     shader->setMat4("projection", m_camera.projection());
     shader->setMat4("view", m_camera.view());
-
-    m_state->tilemap->render(TileMode::Color, shader);
 
     shader = getShader(PARTICLE_SHADER.name);
     shader->use();
@@ -299,6 +313,25 @@ void Renderer::colorPass(double dt) {
 }
 
 void Renderer::lightPass(double dt) {
+
+    m_state->levelGeometry.clear();
+    scene->entities.forEach<hg::graphics::components::Tilemap>([&](auto tilemap, auto entity) {
+
+        if (!tilemap->collide) {
+            return;
+        }
+
+        if (tilemap->dynamic || !tilemap->isBaked()) {
+            tilemap->bake();
+        }
+
+        auto geometry = tilemap->geometry();
+
+        //std::cout << "GEO SIZE = " << geometry.size() << "\n";
+
+        m_state->levelGeometry.insert(m_state->levelGeometry.end(), geometry.begin(), geometry.end());
+    });
+
     m_renderPasses.bind(RenderMode::Lighting);
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
@@ -374,18 +407,24 @@ void Renderer::uiPass(double dt) {
     }
 
     if (scene->hasSystem<Player>()) {
-        auto player = scene->getSystem<Player>();
-        auto weapon = player->player->getComponent<Actor>()->weapons.getWeapon();
+        auto player = scene->getSystem<Player>()->player;
 
-        if (weapon) {
-            if (m_weapon.text() != weapon->settings.name) {
-                m_weapon.text(weapon->settings.name);
-            }
+        if (player) { // TODO: get rid of this digusting if chain
+            auto actor = player->getComponent<Actor>();
+            if (actor) {
+                auto weapon = actor->weapons.getWeapon();
 
-            std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " +
-                                                                       std::to_string(weapon->ammo());
-            if (m_ammo.text() != ammoText) {
-                m_ammo.text(ammoText);
+                if (weapon) {
+                    if (m_weapon.text() != weapon->settings.name) {
+                        m_weapon.text(weapon->settings.name);
+                    }
+
+                    std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " +
+                                                                               std::to_string(weapon->ammo());
+                    if (m_ammo.text() != ammoText) {
+                        m_ammo.text(ammoText);
+                    }
+                }
             }
         }
     }
@@ -467,6 +506,12 @@ void Renderer::combinedPass(double dt) {
 
 hg::graphics::RawTexture<GL_RGBA32F> *Renderer::getRender() {
     return m_renderPasses.get(RenderMode::Combined)->texture.get();
+}
+
+void Renderer::onUpdate(double dt) {
+    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto animator, auto entity) {
+        animator->update(dt);
+    });
 }
 
 

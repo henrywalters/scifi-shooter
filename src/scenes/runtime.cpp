@@ -32,18 +32,11 @@ using namespace hg::graphics;
 
 void Runtime::loadLevel(std::string level) {
 
-    m_state->tilemap->clear();
-
     for (const auto& entity : entities.groups.getEntities(ENEMY_GROUP)) {
         entities.remove(entity);
     }
 
     auto config = MultiConfig::Parse(level);
-
-    m_state->tilemap->load(config);
-    m_state->tilemap->zIndex(1);
-
-    m_state->levelGeometry = m_state->tilemap->decompose(0);
 
     auto items = getSystem<Items>();
     auto props = getSystem<Props>();

@@ -22,10 +22,10 @@ void EditorRuntime::onInit() {
     //addSystem<Actors>(m_state.get());
     addSystem<Renderer>(m_window, m_state.get());
     //addSystem<Enemies>(m_state.get());
-    //addSystem<Weapons>(m_state.get());
-    //addSystem<Items>()->load(MultiConfig::Parse(hg::ASSET_DIR + "items.hg"));
-    //addSystem<Props>()->load(MultiConfig::Parse(hg::ASSET_DIR + "props.hg"));
-    //addSystem<Player>(m_window, m_state.get());
+    addSystem<Weapons>(m_state.get());
+    addSystem<Items>()->load(MultiConfig::Parse(hg::ASSET_DIR + "items.hg"));
+    addSystem<Props>()->load(MultiConfig::Parse(hg::ASSET_DIR + "props.hg"));
+    addSystem<Player>(m_window, m_state.get());
 
     m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::KeyPressed, [&](auto keyPress) {
         if (keyPress.key == '`') {
@@ -69,4 +69,8 @@ void EditorRuntime::onFixedUpdate(double dt) {
 
 void EditorRuntime::onUpdate(double dt) {
 
+}
+
+void EditorRuntime::onActivate() {
+    m_state->levelGeometry.clear();
 }

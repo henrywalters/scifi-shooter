@@ -12,15 +12,15 @@ void FindPath::init(EnemyState *state, data_context_t *ctx) {
     auto start = state->entity->transform.position.resize<2>();
     auto end = GetData<Vec2>(ctx, (uuid_t)BTags::PathEnd);
     m_pathfinding.start(
-    state->game->tilemap->getIndex(start),
-    state->game->tilemap->getIndex(end)
+    state->game->getTileIndex(start),
+    state->game->getTileIndex(end)
     );
 }
 
 Status FindPath::process(double dt, EnemyState *state, data_context_t *ctx) {
 
     m_pathfinding.m_neighborFn = [&](utils::PathFinding::Node node) {
-        return state->game->tilemap->findNeighbors(0, node);
+        return state->game->findTraversableNeighbors(node.position);
     };
 
     for (int i = 0; i < ticksPerFrame; i++) {

@@ -89,9 +89,9 @@ void MainMenu::onUpdate(double dt) {
 }
 
 void MainMenu::render(double dt) {
-    m_window->color(m_state->tilemap->background);
+    m_window->color(Color::black());
     m_renderPasses.bind(RenderMode::Color);
-    m_renderPasses.clear(RenderMode::Color, m_state->tilemap->background);
+    m_renderPasses.clear(RenderMode::Color, Color::black());
 
     auto shader = getShader(TEXT_BUFFER_SHADER.name);
 

@@ -45,7 +45,7 @@ class Renderer : public hg::System {
 public:
 
     const float CONSOLE_MOVE_DUR = 1;
-    const int CROSSHAIR_WIDTH = 2;
+    const int CROSSHAIR_WIDTH = 4.0 / 64.0;
 
     hg::graphics::OrthographicCamera m_camera;
 
@@ -55,6 +55,7 @@ public:
 
     void onBeforeUpdate() override;
     void onRender(double dt) override;
+    void onUpdate(double dt) override;
     void onFixedUpdate(double dt) override;
     void onAfterUpdate() override;
 
@@ -98,6 +99,9 @@ private:
     GameState* m_state;
 
     hg::graphics::RenderPasses<RenderMode> m_renderPasses;
+
+    hg::graphics::primitives::Quad m_animQuad;
+    hg::graphics::MeshInstance m_anim;
 
     hg::graphics::primitives::Quad m_displayQuad;
     hg::graphics::MeshInstance m_mesh;

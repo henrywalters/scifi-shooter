@@ -33,7 +33,7 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 500);
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
     player->addComponent<LightComponent>();
     auto rect = player->addComponent<hg::math::components::RectCollider>();
     rect->pos = Vec2(-0.5, -0.5);
@@ -96,11 +96,7 @@ void Player::pickUpWeapon(WeaponItemDef* weapon, int ammo) {
     aPlayer->trigger(animations[0]);
 }
 
-void Player::onInit() {
-
-    spawn(Vec2::Zero());
-
-}
+void Player::onInit() {}
 
 void Player::onUpdate(double dt) {
 
@@ -152,7 +148,6 @@ void Player::onUpdate(double dt) {
     auto propsInRange = props->getWithinRadius(player->transform.position.resize<2>(), INTERACT_DISTANCE);
 
     if (m_window->input.keyboardMouse.mouse.leftPressed) {
-        std::cout << "E PRESSED\n";
         for (const auto& prop : propsInRange) {
             prop->getComponent<Prop>()->toggle((hg::Entity*) player->getChildByName("Inventory"));
         }
@@ -175,7 +170,6 @@ void Player::ui() {
     ImGui::SliderFloat("Deacceleration", &controller->deacceleration, 0, 10000);
     ImGui::SliderFloat("Max Speed", &controller->maxSpeed, 0, 10000);
     ImGui::SliderFloat("Health", &actor->health, 0, 100);
-
     health->health = actor->health;
 }
 
@@ -220,9 +214,15 @@ void Player::onFixedUpdate(double dt) {
         if (!item) {
             continue;
         }
-        std::cout << item->def->tag << "\n";
     }
 
 
+}
+
+void Player::despawn() {
+    if (player) {
+        scene->entities.remove(player);
+        player = nullptr;
+    }
 }
 

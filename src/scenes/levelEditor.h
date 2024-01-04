@@ -71,7 +71,7 @@ private:
     hg::Vec2 m_mousePos;
     hg::Vec2 m_snapSize = hg::Vec2(20);
 
-    float m_panSpeed = 1.0;
+    float m_panSpeed = 5.0;
     float m_zoomSpeed = 100;
 
     hg::CppLibraryWrapper* m_scripts;
@@ -97,7 +97,7 @@ private:
 
     void play();
     void pause();
-    void reset();
+    void reset(bool force = false);
 
     double m_elapsedTime = 0;
 };

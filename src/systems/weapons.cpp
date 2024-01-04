@@ -89,9 +89,7 @@ void Weapons::onFixedUpdate(double dt) {
             return;
         }
 
-
-
-        auto hit = m_state->tilemap->isColliding(0, projectileRect, vel, dt);
+        auto hit = m_state->isColliding(projectileRect, vel, dt);
 
         if (hit.has_value()) {
 

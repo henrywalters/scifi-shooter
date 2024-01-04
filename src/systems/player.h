@@ -18,13 +18,14 @@ public:
     const float INTERACT_DISTANCE = 50;
     const float PICKUP_SPEED = 500;
 
-    hg::Entity* player;
+    hg::Entity* player = nullptr;
 
     hg::Vec2 m_mousePos;
 
     Player(hg::graphics::Window* window, GameState* state);
 
     void spawn(hg::Vec2 pos);
+    void despawn();
     void onInit() override;
     void onUpdate(double dt) override;
     void onFixedUpdate(double dt) override;

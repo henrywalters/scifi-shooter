@@ -12,7 +12,7 @@ using namespace hg::graphics;
 void LightComponent::computeMesh(std::vector<Polygon> geometry) {
 
     if (geometry.size() == 0) { // If there is nothing to worry about, then we can just draw rectangle
-        triangles = std::make_shared<primitives::Disc>(50000, 10);
+        triangles = std::make_shared<primitives::Disc>(500, 10);
         mesh.update(triangles.get());
         return;
     } else {
@@ -49,8 +49,8 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
         std::array<Vec2, 3> directions;
         std::array<Vec2, 3> hits;
         directions[1] = pt - origin;
-        directions[0] = rotate(directions[1].normalized(), -0.00001) * 10000;
-        directions[2] = rotate(directions[1].normalized(), 0.00001) * 10000;
+        directions[0] = rotate(directions[1].normalized(), -0.00001) * 100;
+        directions[2] = rotate(directions[1].normalized(), 0.00001) * 100;
 
         for (int i = 0; i < directions.size(); i++) {
             Vec2 bestPt;
@@ -76,7 +76,7 @@ void LightComponent::computeMesh(std::vector<Polygon> geometry) {
             }
 
             if (hasBest) {
-                Debug::DrawLine(origin.x(), origin.y(), bestPt.x(), bestPt.y(), Color((float)(pointIdx++) / (3 * points.size()), 0.0f, 0.0f));
+                // Debug::DrawLine(origin.x(), origin.y(), bestPt.x(), bestPt.y(), Color((float)(pointIdx++) / (3 * points.size()), 0.0f, 0.0f), 2.0 / 64.0);
                 hits[i] = bestPt;
             }
         }

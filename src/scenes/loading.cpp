@@ -117,7 +117,7 @@ void Loading::onInit() {
 
 void Loading::onUpdate(double dt) {
 
-    m_window->color(m_state->tilemap->background);
+    m_window->color(Color::black());
     m_renderPasses.bind(RenderMode::Color);
     m_renderPasses.clear(RenderMode::Color, Color::black());
 

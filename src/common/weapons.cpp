@@ -79,7 +79,7 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
             }
         });
 
-        hit = runtime->state()->tilemap->raycast(0, ray, t);
+        hit = runtime->state()->raycastGeometry(ray);
 
         if (hit.has_value() && (!hasMinT || t < minT)) {
             auto hitDisplay = runtime->entities.add();

@@ -27,6 +27,7 @@ public:
 protected:
 
     void onInit() override;
+    void onActivate() override;
     void onFixedUpdate(double dt) override;
     void onUpdate(double dt) override;
 

@@ -11,6 +11,7 @@
 #include "../levelEditor/events.h"
 #include "../components/startPoint.h"
 #include "../systems/audio.h"
+#include "../systems/player.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -19,6 +20,10 @@ using namespace hg::graphics;
 void LevelEditor::onInit() {
 
     m_runtime = addChild<EditorRuntime>(m_window);
+
+    Windows::Events.subscribe(WindowEvents::Close, [&](WindowEvent e) {
+        m_selectedEntity = nullptr;
+    });
 
     Events()->subscribe(EventTypes::SelectEntity, [&](const auto& e) {
         m_selectedEntity = std::get<EntityEvent>(e.payload).entity;
@@ -273,8 +278,8 @@ void LevelEditor::renderSelectedEntityWindow(double dt) {
 
 void LevelEditor::newScene() {
     m_runtime->clear();
-    m_runtimeData = m_runtime->save();
-    m_selectedEntity = nullptr;
+    reset();
+    Events()->emit(EventTypes::NewLevel, Event{m_runtime});
 }
 
 void LevelEditor::saveAs() {
@@ -287,6 +292,7 @@ void LevelEditor::saveAs() {
 void LevelEditor::saveToDisc() {
     auto config = m_runtime->save();
     utils::f_write(m_saveFile, config.toString());
+    Events()->emit(EventTypes::SaveLevel, Event{m_runtime});
 }
 
 void LevelEditor::loadFromDisc() {
@@ -295,6 +301,7 @@ void LevelEditor::loadFromDisc() {
         auto config = utils::MultiConfig::Parse(m_saveFile);
         newScene();
         m_runtime->load(config);
+        Events()->emit(EventTypes::LoadLevel, Event{m_runtime});
     }, {LEVEL_EXT});
 }
 
@@ -407,6 +414,10 @@ void LevelEditor::play() {
 
         m_playing = true;
         m_runtimeData = m_runtime->save();
+
+        m_runtime->getSystem<Player>()->spawn(startPos);
+
+        m_runtime->activate();
     } else {
         m_runtime->getSystem<AudioSystem>()->play();
     }
@@ -419,10 +430,16 @@ void LevelEditor::pause() {
     m_runtime->active(false);
 }
 
-void LevelEditor::reset() {
-    if (m_playing) {
+void LevelEditor::reset(bool force) {
+    if (m_playing || force) {
+        if (m_runtime->hasSystem<Player>()) {
+            m_runtime->getSystem<Player>()->despawn();
+        }
+        if (m_runtime->hasSystem<AudioSystem>()) {
+            m_runtime->getSystem<AudioSystem>()->stop();
+        }
+        m_runtime->deactivate();
         m_elapsedTime = 0;
-        m_runtime->getSystem<AudioSystem>()->stop();
         m_runtime->active(false);
         m_playing = false;
         m_selectedEntity = nullptr;

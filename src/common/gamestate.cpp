@@ -4,11 +4,15 @@
 #include "gamestate.h"
 #include "../components/item.h"
 #include <hagame/graphics/components/sprite.h>
+#include <hagame/math/collisions.h>
+#include <hagame/graphics/components/tilemap.h>
 
 using namespace hg;
+using namespace hg::math;
 using namespace hg::graphics;
 
 Vec2 GameState::randomTilemapPos() {
+    /*
     bool isValid = false;
     hg::Vec2i idx;
     while (!isValid) {
@@ -18,6 +22,8 @@ Vec2 GameState::randomTilemapPos() {
         }
     }
     return tilemap->getPos(idx);
+     */
+    return hg::Vec2::Zero();
 }
 
 bool GameState::canSee(const Vec2 &pos, hg::Entity *entity) {
@@ -39,37 +45,62 @@ bool GameState::canSee(const Vec2 &pos, hg::Entity *entity) {
 
     for (const auto& point : points) {
         math::Ray ray(pos.resize<3>(), (point - pos).resize<3>());
-        auto hit = tilemap->raycast(0, ray, t);
-        if (hit.has_value()) {
-            canSee = false;
-            break;
+        for (const auto& polygon : levelGeometry) {
+            auto hit = math::collisions::checkRayAgainstPolygon(ray, polygon, t);
+            if (hit.has_value()) {
+                canSee = false;
+                break;
+            }
         }
     }
 
     return canSee;
 }
 
+std::optional<hg::math::collisions::Hit> GameState::raycastGeometry(hg::math::Ray ray) {
+    float minT, t;
+    bool hasMinT = false;
+    std::optional<collisions::Hit> bestHit;
+
+    for (const auto& polygon : levelGeometry) {
+        auto hit = math::collisions::checkRayAgainstPolygon(ray, polygon, t);
+        if (hit.has_value()) {
+            if (!hasMinT || t < minT) {
+                minT = t;
+                hasMinT = true;
+                bestHit = hit;
+            }
+        }
+    }
+
+    return bestHit;
+}
+
+
 std::optional<Entity *> GameState::raycast(math::Ray ray, Vec2& pos, std::vector<hg::Entity*> ignore) {
 
-    // TODO: Fix this without the assumption that there is always a tilemap
-    return std::nullopt;
-
-    float tileT;
     float entityT;
+    float geometryT = 1.0f;
 
     ray.direction.normalize();
-    ray.direction *= 10000;
+    ray.direction *= 100;
 
-    auto hit = tilemap->raycast(0, ray, tileT);
+    float minT;
+    bool hasMinT = false;
 
-    // This assumes there will always be a border on the tilemap. Maybe not ideal?
-    if (!hit.has_value()) {
-        return std::nullopt;
+    for (const auto& polygon : levelGeometry) {
+        auto hit = math::collisions::checkRayAgainstPolygon(ray, polygon, geometryT);
+        if (hit.has_value()) {
+            if (!hasMinT || geometryT < minT) {
+                minT = geometryT;
+                hasMinT = true;
+            }
+        }
     }
 
     // We only need to check this far
-    pos = ray.getPointOnLine(tileT).resize<2>();
-    ray.direction *= tileT;
+    pos = ray.getPointOnLine(geometryT).resize<2>();
+    ray.direction *= geometryT;
 
     auto hitEntity = entityMap.raycast(ray, entityT, ignore);
 
@@ -106,3 +137,80 @@ void GameState::gotoScene(hg::Game* game, std::string next) {
     }
     game->scenes()->activate(next);
 }
+
+bool GameState::isColliding(hg::Rect rect) {
+    for (const auto& polygon : levelGeometry) {
+        if (math::collisions::checkRectAgainstPolygon(rect, polygon)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::optional<collisions::Hit> GameState::isColliding(hg::Rect rect, hg::Vec3 vel, double dt) {
+    bool hasHit = false;
+    float minT;
+    std::optional<collisions::Hit> bestHit = std::nullopt;
+    float t;
+    for (const auto& polygon : levelGeometry) {
+        auto hit = collisions::checkRayAgainstPolygon(Ray(rect.getCenter().resize<3>(), vel * dt), polygon, t);
+        if (hit.has_value() && t < 1.0f && (!hasHit || t < minT)) {
+            hasHit = true;
+            minT = t;
+            bestHit = hit;
+        }
+    }
+    return bestHit;
+}
+
+std::vector<hg::utils::PathFinding::Node> GameState::findTraversableNeighbors(hg::Vec2i index) {
+    std::vector<hg::utils::PathFinding::Node> out;
+    std::array<hg::Vec2i, 4> neighbors = {
+        index + hg::Vec2i(1, 0),
+        index + hg::Vec2i(0, 1),
+        index + hg::Vec2i(-1, 0),
+        index + hg::Vec2i(0, -1),
+    };
+    std::array<bool, 4> canTraverse = {true, true, true, true};
+    scene->entities.forEach<hg::graphics::components::Tilemap>([&](auto tilemap, auto entity) {
+        for (int i = 0; i < 4; i++) {
+            if (tilemap->collide && tilemap->tiles.has(neighbors[i])) {
+                canTraverse[i] = false;
+            }
+        }
+    });
+
+    for (int i = 0; i < 4; i++) {
+        if (canTraverse[i]) {
+            utils::PathFinding::Node neighbor;
+            neighbor.position = neighbors[i];
+            neighbor.cost = 0;
+            out.push_back(neighbor);
+        }
+    }
+
+    return out;
+}
+
+bool GameState::canTraverse(hg::Vec2i index) {
+    bool canTraverse = true;
+    scene->entities.forEach<hg::graphics::components::Tilemap>([&](auto tilemap, auto entity) {
+        if (!canTraverse) {return;}
+        for (int i = 0; i < 4; i++) {
+            if (tilemap->collide && tilemap->tiles.has(index)) {
+                canTraverse = false;
+                return;
+            }
+        }
+    });
+    return canTraverse;
+}
+
+Vec2i GameState::getTileIndex(hg::Vec2 pos) {
+    return pos.div(TILE_SIZE).floor().cast<int>();
+}
+
+Vec2 GameState::getTilePos(hg::Vec2i index) {
+    return index.cast<float>().prod(TILE_SIZE);
+}
+
