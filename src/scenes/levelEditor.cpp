@@ -98,6 +98,10 @@ void LevelEditor::onUpdate(double dt) {
 
     renderUI(game()->dt());
 
+    if (!m_runtime->hasSystem<Renderer>()) {
+        return;
+    }
+
     auto renderer = m_runtime->getSystem<Renderer>();
 
     m_window->setVSync(m_runtime->m_state->params.vsync);
@@ -111,7 +115,7 @@ void LevelEditor::onUpdate(double dt) {
 
     if (m_rawMousePos.x() >= 0 && m_rawMousePos.x() <= 1 && m_rawMousePos.y() >= 0 && m_rawMousePos.y() <= 1.0) {
         renderer->m_camera.transform.position += m_window->input.keyboardMouse.lAxis.resize<3>() * m_panSpeed * dt;
-        m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * dt * m_zoomSpeed, 0.0001, 3);
+        m_runtime->state()->zoom = std::clamp<float>(renderer->m_camera.zoom + (float) m_window->input.keyboardMouse.mouse.wheel * m_zoomSpeed, 0.0001, 3);
         for (const auto& tool : m_tools) {
             tool->update(m_mousePos, dt);
         }
@@ -362,7 +366,9 @@ void LevelEditor::renderRenderWindow(double dt) {
         m_renderRect.size = Vec2(imageSize.x, imageSize.y);
         m_renderRect.pos = Vec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y);
 
-        ImGui::Image((void *) m_runtime->getSystem<Renderer>()->getRender()->id, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+        if (m_runtime->hasSystem<Renderer>()) {
+            ImGui::Image((void *) m_runtime->getSystem<Renderer>()->getRender()->id, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+        }
     }
     ImGui::EndChild();
 
@@ -390,6 +396,10 @@ void LevelEditor::renderSettingsWindow(double dt) {
     ImGui::DragFloat("Camera Zoom", &m_runtime->state()->zoom, 0.0001, 3, 0.001);
 
     ImGui::Text(("Window: " + m_window->size().toString() + ", " + m_window->pos().toString()).c_str());
+
+    if (m_runtime->hasSystem<Player>() && m_runtime->getSystem<Player>()->player) {
+        ImGui::Text(("Player Position: " + m_runtime->getSystem<Player>()->player->position().toString()).c_str());
+    }
 
     ImGui::End();
 }
@@ -445,5 +455,6 @@ void LevelEditor::reset(bool force) {
         m_selectedEntity = nullptr;
         m_runtime->clear();
         m_runtime->load(m_runtimeData);
+        Events()->emit(EventTypes::LoadLevel, Event{m_runtime});
     }
 }

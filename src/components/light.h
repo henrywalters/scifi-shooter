@@ -22,7 +22,7 @@ public:
 
     float fov = M_PI * 2;
     hg::graphics::Color color = hg::graphics::Color::white();
-    float attenuation = 0.005f;
+    float attenuation = 1.0f;
     bool dynamic = true;
 
     std::shared_ptr<hg::graphics::Mesh> triangles;
@@ -38,7 +38,7 @@ protected:
 };
 
 HG_COMPONENT(Graphics, LightComponent)
-HG_FIELD(LightComponent, float, attenuation)
+HG_NUMBER_FIELD(LightComponent, float, attenuation, 0, 10, 0.1)
 HG_FIELD(LightComponent, float, fov)
 HG_FIELD(LightComponent, bool, dynamic)
 HG_FIELD(LightComponent, hg::graphics::Color, color)

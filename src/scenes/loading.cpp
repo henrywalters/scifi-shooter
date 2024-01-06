@@ -164,6 +164,8 @@ void Loading::onUpdate(double dt) {
     getTexture("logo")->bind();
     m_logo.render();
 
+    glDisable(GL_DEPTH_TEST);
+
     m_renderPasses.render(RenderMode::Color, 1);
 
     shader->use();

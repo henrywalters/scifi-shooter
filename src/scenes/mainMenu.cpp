@@ -111,6 +111,8 @@ void MainMenu::render(double dt) {
 
     m_renderPasses.render(RenderMode::Color, 1);
 
+    glDisable(GL_DEPTH_TEST);
+
     shader = getShader(TEXTURE_SHADER.name);
     shader->use();
     shader->setMat4("view", Mat4::Identity());

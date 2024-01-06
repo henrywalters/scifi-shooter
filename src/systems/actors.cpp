@@ -44,7 +44,7 @@ void Actors::onFixedUpdate(double dt) {
 
         controller->velocity(vel);
 
-        if (hg::nearEqual<float>(vel.magnitude(), 0, 1)) {
+        if (hg::nearEqual<float>(vel.magnitude(), 0, 0.001)) {
             controller->velocity(hg::Vec3::Zero());
         }
 

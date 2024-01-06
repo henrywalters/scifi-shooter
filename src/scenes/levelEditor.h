@@ -72,7 +72,7 @@ private:
     hg::Vec2 m_snapSize = hg::Vec2(20);
 
     float m_panSpeed = 5.0;
-    float m_zoomSpeed = 100;
+    float m_zoomSpeed = 0.05;
 
     hg::CppLibraryWrapper* m_scripts;
 

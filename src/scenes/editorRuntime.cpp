@@ -19,7 +19,7 @@ void EditorRuntime::onInit() {
     m_state->scene = this;
 
     addSystem<AudioSystem>();
-    //addSystem<Actors>(m_state.get());
+    addSystem<Actors>(m_state.get());
     addSystem<Renderer>(m_window, m_state.get());
     //addSystem<Enemies>(m_state.get());
     addSystem<Weapons>(m_state.get());

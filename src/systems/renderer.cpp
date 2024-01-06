@@ -41,7 +41,7 @@ Renderer::Renderer(Window* window, GameState* state, bool editorMode):
     m_lightMesh(&m_light),
     //m_quadMesh(&m_quad),
     m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>()),
-    m_startQuad(Vec2(1, 1)),
+    m_startQuad(Vec2(0.25, 0.25)),
     m_startMesh(&m_startQuad),
     m_animQuad(Vec2(1, 1)),
     m_anim(&m_animQuad)
@@ -115,6 +115,7 @@ void Renderer::onRender(double dt) {
     m_camera.zoom = m_state->zoom;
 
     m_window->color(Color::black());
+    // m_window->clear();
 
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.clear(RenderMode::Color, Color::black());
@@ -234,28 +235,15 @@ void Renderer::colorPass(double dt) {
         m_batchRenderer.sprites.batch(entity, sprite);
     });
 
-    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto animator, auto entity) {
-        auto animation = (hg::graphics::SpriteSheet*) animator->player->get();
-        if (animation) {
-            animation->texture()->bind();
-            shader->setMat4("model", entity->model());
-            m_animQuad.size(animation->size.cast<float>());
-            auto rect = animation->getRect();
-            m_animQuad.texSize(rect.size);
-            m_animQuad.texOffset(rect.pos);
-            m_anim.update(&m_animQuad);
-            m_anim.render();
-        }
-    });
-
     scene->entities.forEach<components::Tilemap>([&](auto tilemap, auto entity) {
         tilemap->tiles.forEach([&](hg::Vec2i index, components::Tile tile) {
             if (tile.type == components::TileType::Color) {
-                m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, entity->model() * Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>()));
+                std::cout << Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()) << "\n";
+                m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()));
             }
 
             if (tile.type == components::TileType::Texture) {
-                m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, entity->model() * Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>()));
+                m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()));
             }
         });
     });
@@ -273,6 +261,27 @@ void Renderer::colorPass(double dt) {
     shader->setMat4("view", m_camera.view());
 
     m_batchRenderer.sprites.render();
+
+    // Render any animated sprites above other stuff for automatic Z sorting
+    shader = getShader(TEXTURE_SHADER.name);
+    shader->use();
+    shader->setMat4("projection", m_camera.projection());
+    shader->setMat4("view", m_camera.view());
+
+    scene->entities.forEach<components::SpriteSheetAnimator>([&](auto animator, auto entity) {
+        auto animation = (hg::graphics::SpriteSheet*) animator->player->get();
+        if (animation) {
+            animation->texture()->bind();
+            std::cout << entity->model() << "\n\n";
+            shader->setMat4("model", entity->model());
+            //m_animQuad.size(animation->size.cast<float>());
+            auto rect = animation->getRect();
+            m_animQuad.texSize(rect.size);
+            m_animQuad.texOffset(rect.pos);
+            m_anim.update(&m_animQuad);
+            m_anim.render();
+        }
+    });
 
     scene->entities.forEach<Actor>([&](Actor* actor, hg::Entity* entity) {
         Vec3 dir = actor->direction.resize<3>().normalized();
@@ -473,6 +482,10 @@ void Renderer::uiPass(double dt) {
 }
 
 void Renderer::combinedPass(double dt) {
+
+
+    glDisable(GL_DEPTH_TEST);
+    // glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     m_renderPasses.bind(RenderMode::Combined);
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);

@@ -34,6 +34,7 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 
 void Player::spawn(hg::Vec2 pos) {
     player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
+    player->transform.position = pos.resize<3>();
     player->addComponent<LightComponent>();
     auto rect = player->addComponent<hg::math::components::RectCollider>();
     rect->pos = Vec2(-0.5, -0.5);
