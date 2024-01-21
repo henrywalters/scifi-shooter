@@ -4,6 +4,7 @@
 #include <hagame/math/collisions.h>
 #include <hagame/common/components/healthBar.h>
 #include <hagame/graphics/components/particleEmitterComponent.h>
+#include <hagame/utils/profiler.h>
 #include "weapons.h"
 #include "../components/projectile.h"
 #include "../components/actor.h"
@@ -12,6 +13,7 @@
 
 using namespace hg;
 using namespace hg::graphics;
+using namespace hg::utils;
 
 Weapons::Weapons(GameState* state):
     m_state(state)
@@ -22,6 +24,8 @@ void Weapons::onFixedUpdate(double dt) {
     if (m_state->paused) {
         return;
     }
+
+    Profiler::Start("Weapons::onFixedUpdate");
 
     scene->entities.forEach<Projectile>([&](Projectile* projectile, hg::Entity* entity) {
 
@@ -109,4 +113,6 @@ void Weapons::onFixedUpdate(double dt) {
 
         projectile->update(dt);
     });
+
+    Profiler::End("Weapons::onFixedUpdate");
 }

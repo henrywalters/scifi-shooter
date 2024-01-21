@@ -14,8 +14,8 @@
 class Player : public hg::System {
 public:
 
-    const float PICKUP_DISTANCE = 100;
-    const float INTERACT_DISTANCE = 50;
+    const float PICKUP_DISTANCE = 1;
+    const float INTERACT_DISTANCE = 1;
     const float PICKUP_SPEED = 500;
 
     hg::Entity* player = nullptr;

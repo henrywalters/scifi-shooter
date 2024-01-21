@@ -12,7 +12,7 @@ using namespace hg::graphics;
 void LightComponent::computeMesh(std::vector<Polygon> geometry) {
 
     if (geometry.size() == 0) { // If there is nothing to worry about, then we can just draw rectangle
-        triangles = std::make_shared<primitives::Disc>(500, 10);
+        triangles = std::make_shared<primitives::Disc>(100, 10);
         mesh.update(triangles.get());
         return;
     } else {

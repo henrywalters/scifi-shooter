@@ -1,18 +1,38 @@
 ~Props~
 
-[Lever]
-size=64,64
-states=on,off,disabled
-default_state=disabled
-on_texture=props/lever_on
-off_texture=props/lever_off
-disabled_texture=props/lever_disabled
-on_collide=1
-off_collide=1
-disabled_collide=1
-on_message=The lever is turned on. It must have triggered something
-off_message=The lever is turned off.
-disabled_message=The lever seems to be broken. I need something to repair it
-disabled_next=off
-off_next=on
-on_next=off
+[3499016236]
+states=2768434793,540094559
+540094559_collide=0
+540094559_texture=props/gate_open
+540094559_name=Open
+2768434793_message=The gate is closed. Perhaps it can be opened somehow.
+2768434793_collide=1
+2768434793_texture=props/gate_closed
+540094559_message=The gate is open. You may pass freely.
+2768434793_next=540094559
+2768434793_name=Closed
+default_state=2768434793
+size=1.000000,1.000000
+tag=Gate
+
+
+[236273642]
+877034805_message=The lever is not working. I need a tool to fix this.
+877034805_collide=0
+877034805_texture=props/lever_disabled
+size=1.000000,1.000000
+default_state=877034805
+4114273920_collide=0
+states=2263372411,4114273920,877034805
+2263372411_name=Off
+4114273920_name=On
+2263372411_texture=props/lever_off
+2263372411_collide=0
+877034805_next=2263372411
+tag=Lever
+2263372411_next=4114273920
+4114273920_texture=props/lever_on
+2263372411_message=The lever needs to be turned on.
+4114273920_message=
+877034805_name=Disabled
+

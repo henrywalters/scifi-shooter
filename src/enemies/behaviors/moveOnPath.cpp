@@ -57,7 +57,7 @@ Status MoveOnPath::process(double dt, EnemyState *state, data_context_t *ctx) {
         auto pathPos =  m_path[i] + TILE_SIZE * 0.5;
         auto ray = math::Ray(state->entity->transform.position, pathPos.resize<3>() - state->entity->transform.position);
         float t;
-        auto hit = state->game->raycastGeometry(ray);
+        auto hit = state->game->raycastGeometry(ray, t);
         if (!hit.has_value()) {
             m_target = pathPos;
             m_hasTarget = true;

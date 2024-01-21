@@ -7,6 +7,7 @@
 
 #include <hagame/common/weapons.h>
 #include <hagame/core/entity.h>
+#include "../scenes/editorRuntime.h"
 
 class Runtime;
 
@@ -17,7 +18,7 @@ public:
 
     std::string particles;
     hg::Entity* source;
-    Runtime* runtime;
+    EditorRuntime* runtime;
     float speed = 1000.0f;
 
     ProjectileWeapon(hg::common::WeaponDef def):
@@ -52,7 +53,7 @@ class RaycastWeapon : public hg::common::Weapon {
 public:
 
     hg::Entity* source;
-    Runtime* runtime;
+    EditorRuntime* runtime;
 
     hg::Vec2 computeSpread() override {
         return hg::Vec2(m_spread, 0);

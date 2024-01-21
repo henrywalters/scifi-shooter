@@ -40,12 +40,6 @@ void Runtime::loadLevel(std::string level) {
 
     auto items = getSystem<Items>();
     auto props = getSystem<Props>();
-
-    std::cout << "ITEMS ID = " << Items::id << "\n";
-
-    items->spawn(items->get("Wrench"), m_state->randomTilemapPos());
-    auto lever = props->spawn(props->get("Lever"), m_state->randomTilemapPos());
-    lever->getComponent<Prop>()->addRequirement("off", "Wrench");
 }
 
 

@@ -54,5 +54,9 @@ void Items::onSpawn(hg::Entity *entity) {
     entity->name = item->def->tag;
 }
 
+void Items::save(hg::utils::MultiConfig &config) {
+
+}
+
 
 

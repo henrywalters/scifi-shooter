@@ -5,8 +5,10 @@
 #include <hagame/audio/player.h>
 #include <hagame/core/scene.h>
 #include <hagame/core/assets.h>
+#include <hagame/utils/profiler.h>
 
 using namespace hg::audio;
+using namespace hg::utils;
 
 AudioSystem::AudioSystem()
 {
@@ -18,6 +20,8 @@ AudioSystem::AudioSystem()
 }
 
 void AudioSystem::onUpdate(double dt) {
+
+    Profiler::Start("Audio::onUpdate");
 
     int initialized = 0;
     int sources = 0;
@@ -61,6 +65,8 @@ void AudioSystem::onUpdate(double dt) {
     if (initialized == sources && !m_played) {
         play();
     }
+
+    Profiler::End("Audio::onUpdate");
 }
 
 std::optional<AudioSystem::Source> AudioSystem::getSource(hg::Entity *entity) {

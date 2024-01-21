@@ -12,15 +12,15 @@
 #include "../common/propDef.h"
 #include "../components/prop.h"
 #include "../common/gamestate.h"
+#include "../components/connection.h"
 
 #include "worldObjects.h"
 
-class Props : public WorldObjects<std::string, PropDef, Prop> {
+class Props : public WorldObjects<hg::utils::uuid_t, PropDef, Prop> {
 public:
 
-
     void load(hg::utils::MultiConfig config) override;
-
+    void save(hg::utils::MultiConfig& config) override;
 
 protected:
 

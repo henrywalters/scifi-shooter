@@ -50,7 +50,7 @@ struct GameState {
 
     hg::graphics::Color randomColor();
 
-    std::optional<hg::math::collisions::Hit> raycastGeometry(hg::math::Ray ray);
+    std::optional<hg::math::collisions::Hit> raycastGeometry(hg::math::Ray ray, float& t);
 
     // Perform a raycast that takes into consideration the tilemap and the Entity map. If an entity is hit, it will be returned.
     std::optional<hg::Entity*> raycast(hg::math::Ray ray, hg::Vec2& pos, std::vector<hg::Entity*> ignore = {});

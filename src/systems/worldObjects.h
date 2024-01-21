@@ -21,6 +21,7 @@ public:
     {}
 
     virtual void load(hg::utils::MultiConfig config) = 0;
+    virtual void save(hg::utils::MultiConfig& config) = 0;
 
     // Get all objects with the radius of some position
     std::vector<hg::Entity*> getWithinRadius(hg::Vec2 pos, float radius) {
@@ -58,8 +59,13 @@ public:
     void onBeforeUpdate() override {
         m_map.clear();
         scene->entities.forEach<ComponentType>([&](ComponentType* comp, hg::Entity* entity) {
+            if (!comp->def) { return; }
             m_map.insert(entity->position().resize<2>(), comp->def->size, entity);
         });
+    }
+
+    hg::utils::Store<KeyType, std::shared_ptr<ObjectType>>& store() {
+        return m_store;
     }
 
 protected:

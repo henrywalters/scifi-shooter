@@ -8,6 +8,7 @@
 #include <hagame/math/aliases.h>
 
 struct WorldObjectDef {
+    hg::utils::uuid_t id;
     hg::Vec2 size;
     std::string tag;
 };

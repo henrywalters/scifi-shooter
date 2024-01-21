@@ -14,17 +14,17 @@ class PropDef : public WorldObjectDef {
 public:
 
     struct State {
+        hg::utils::uuid_t id;
         std::string name;
         std::string texture;
         bool collide;
         std::string message;
-        int nextState;
+        std::optional<hg::utils::uuid_t> nextStateId = std::nullopt;
     };
 
-    int defaultState;
-    std::vector<State> states;
-    hg::Vec2 size;
-    std::string tag;
+    hg::utils::uuid_t defaultStateId;
+    std::unordered_map<hg::utils::uuid_t, State> states;
+
 };
 
 #endif //SCIFISHOOTER_PROPDEF_H

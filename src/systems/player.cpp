@@ -22,6 +22,8 @@
 #include "../components/item.h"
 #include "../components/light.h"
 #include "props.h"
+#include "../scenes/editorRuntime.h"
+#include "../levelEditor/events.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -33,12 +35,14 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 {}
 
 void Player::spawn(hg::Vec2 pos) {
-    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 1);
+    player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 3);
     player->transform.position = pos.resize<3>();
     player->addComponent<LightComponent>();
-    auto rect = player->addComponent<hg::math::components::RectCollider>();
-    rect->pos = Vec2(-0.5, -0.5);
-    rect->size = Vec2(1, 1);
+    //auto rect = player->addComponent<hg::math::components::RectCollider>();
+    //rect->pos = Vec2(-0.5, -0.5);
+    //rect->size = Vec2(1, 1);
+    auto collider = player->addComponent<hg::math::components::CircleCollider>();
+    collider->radius = 0.3;
     scene->addToGroup(PLAYER_GROUP, player);
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
@@ -60,12 +64,12 @@ void Player::pickUpWeapon(WeaponItemDef* weapon, int ammo) {
     auto actor = player->getComponent<Actor>();
     if (weapon->weaponType == WeaponType::Raycast) {
         auto added = actor->weapons.add<RaycastWeapon>(weapon->settings, weapon->settings.shotsPerSecond, weapon->spread * math::DEG2RAD);
-        added->runtime = (Runtime*) scene;
+        added->runtime = (EditorRuntime*) scene;
         added->source = player;
         added->addAmmo(ammo);
     } else if (weapon->weaponType == WeaponType::Projectile) {
         auto added = actor->weapons.add<ProjectileWeapon>(weapon->settings);
-        added->runtime = (Runtime*) scene;
+        added->runtime = (EditorRuntime*) scene;
         added->source = player;
         added->addAmmo(ammo);
     } else {
@@ -97,7 +101,11 @@ void Player::pickUpWeapon(WeaponItemDef* weapon, int ammo) {
     aPlayer->trigger(animations[0]);
 }
 
-void Player::onInit() {}
+void Player::onInit() {
+    Events()->subscribe(EventTypes::LoadLevel, [&](auto e) {
+        player = nullptr;
+    });
+}
 
 void Player::onUpdate(double dt) {
 
@@ -150,6 +158,7 @@ void Player::onUpdate(double dt) {
 
     if (m_window->input.keyboardMouse.mouse.leftPressed) {
         for (const auto& prop : propsInRange) {
+            std::cout << prop->getComponent<Prop>()->def->tag << "\n";
             prop->getComponent<Prop>()->toggle((hg::Entity*) player->getChildByName("Inventory"));
         }
     }
@@ -179,6 +188,8 @@ void Player::onFixedUpdate(double dt) {
     if (!player) {
         return;
     }
+
+    utils::Profiler::Start("Player::onFixedUpdate");
 
     if (m_state->paused) {
         return;
@@ -217,7 +228,7 @@ void Player::onFixedUpdate(double dt) {
         }
     }
 
-
+    utils::Profiler::End("Player::onFixedUpdate");
 }
 
 void Player::despawn() {

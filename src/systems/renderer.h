@@ -115,6 +115,7 @@ private:
     hg::graphics::TextBuffer m_weapon;
     hg::graphics::TextBuffer m_ammo;
     hg::graphics::TextBuffer m_enemies;
+    hg::graphics::TextBuffer m_profiler;
 
     std::unique_ptr<hg::graphics::MeshInstance> m_laserMesh;
     hg::graphics::primitives::Line m_laser;

@@ -79,13 +79,19 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
             }
         });
 
-        hit = runtime->state()->raycastGeometry(ray);
+        auto state = runtime->state();
+
+        hit = state->raycastGeometry(ray, t);
 
         if (hit.has_value() && (!hasMinT || t < minT)) {
             auto hitDisplay = runtime->entities.add();
             hitDisplay->transform.position = hit.value().position;
-            auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get("wall_hit"));
-            emitter->emitter()->fire();
+            auto hitQuad = hitDisplay->addComponent<hg::graphics::Quad>();
+            hitDisplay->transform.position[2] = 5;
+            hitQuad->size = hg::Vec2(4.0 / 64.0, 4.0 / 64.0);
+            hitQuad->color = hg::graphics::Color::blue();
+            //auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get("wall_hit"));
+            //emitter->emitter()->fire();
             continue;
         } else if (hasMinT) {
             auto hitDisplay = runtime->entities.add();

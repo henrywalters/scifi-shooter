@@ -19,38 +19,7 @@ void TilemapTool::onInit() {
     m_modes.push_back(std::make_unique<PointMode>());
     m_modes.push_back(std::make_unique<LineMode>());
     m_modes.push_back(std::make_unique<FillMode>());
-
-    Events()->subscribe(EventTypes::SelectEntity, [&](const auto& e) {
-        EntityEvent payload = std::get<EntityEvent>(e.payload);
-        if (payload.entity->hasComponent<components::Tilemap>()) {
-            m_selectedEntity = payload.entity;
-            open();
-        } else {
-            m_selectedEntity = nullptr;
-        }
-    });
-
-    Events()->subscribe(EventTypes::RemoveEntity, [&](const auto& e) {
-        EntityEvent payload = std::get<EntityEvent>(e.payload);
-        if (payload.entity == m_selectedEntity) {
-            m_selectedEntity = nullptr;
-        }
-    });
-
-    Events()->subscribe(EventTypes::AddComponent, [&](const auto& e) {
-        ComponentEvent payload = std::get<ComponentEvent>(e.payload);
-        if (payload.component == "Tilemap") {
-            m_selectedEntity = payload.entity;
-            open();
-        }
-    });
-
-    Events()->subscribe(EventTypes::RemoveComponent, [&](const auto& e) {
-        ComponentEvent payload = std::get<ComponentEvent>(e.payload);
-        if (payload.component == "Tilemap") {
-            m_selectedEntity = nullptr;
-        }
-    });
+    m_modes.push_back(std::make_unique<ColorPickerMode>());
 
     Events()->subscribe(EventTypes::SelectAsset, [&](const auto& e) {
         AssetEvent payload = std::get<AssetEvent>(e.payload);
@@ -60,14 +29,11 @@ void TilemapTool::onInit() {
         }
     });
 
-    Events()->subscribe(EventTypes::NewLevel, [&](const auto& e) {
-        m_selectedEntity = nullptr;
-    });
-
-    Events()->subscribe(EventTypes::LoadLevel, [&](const auto& e) {
-        hg::Scene* scene = std::get<hg::Scene*>(e.payload);
-        if (m_selectedEntity && !scene->entities.exists(m_selectedEntity->id())) {
-            m_selectedEntity = nullptr;
+    m_selected.events.subscribe([&](SelectedEntityEvents event) {
+        if (event == SelectedEntityEvents::Selected) {
+            open();
+        } else {
+            close();
         }
     });
 }
@@ -78,8 +44,8 @@ void TilemapTool::renderUI(double dt) {
 
     ImGui::Begin("Tilemap Editor", &m_open);
 
-    if (m_selectedEntity) {
-        auto tilemap = m_selectedEntity->getComponent<components::Tilemap>();
+    if (m_selected.hasSelected()) {
+        auto tilemap = m_selected.component();
         m_mouseIndex = tilemap->getIndex(m_mousePos);
         ImGui::Text(("Mouse Pos: " + m_mouseIndex.toString()).c_str());
 
@@ -135,11 +101,11 @@ void TilemapTool::renderUI(double dt) {
 }
 
 void TilemapTool::onUpdate(double dt) {
-    if (!m_selectedEntity) {
+    if (!m_selected.hasSelected()) {
         return;
     }
     EditorRuntime* runtime = (EditorRuntime*) m_scene;
-    auto tilemap = m_selectedEntity->getComponent<components::Tilemap>();
+    auto tilemap = m_selected.component();
 
     if (tilemap->tileSize != m_grid.cellSize()) {
         m_grid.cellSize(tilemap->tileSize);
@@ -169,10 +135,10 @@ void TilemapTool::onUpdate(double dt) {
 
 void TilemapTool::renderOverlay() {
 
-    if (!m_selectedEntity) {
+    if (!m_selected.hasSelected()) {
         return;
     }
-    auto tilemap = m_selectedEntity->getComponent<hg::graphics::components::Tilemap>();
+    auto tilemap = m_selected.component();
     EditorRuntime* runtime = (EditorRuntime*) m_scene;
 
     auto renderer = m_scene->getSystem<Renderer>();
@@ -194,11 +160,11 @@ void TilemapTool::renderOverlay() {
 
 void TilemapTool::processTransaction(TilemapTool::Transaction transaction) {
 
-    if (!m_selectedEntity) {
+    if (!m_selected.hasSelected()) {
         return;
     }
 
-    auto tilemap = m_selectedEntity->getComponent<components::Tilemap>();
+    auto tilemap = m_selected.component();
     for (const auto& tile : transaction.tiles) {
         if (transaction.type == Transaction::Type::Addition) {
             tilemap->tiles.set(tile.index, tile);
@@ -211,11 +177,11 @@ void TilemapTool::processTransaction(TilemapTool::Transaction transaction) {
 }
 
 void TilemapTool::rollback(int steps) {
-    if (!m_selectedEntity ) {
+    if (!m_selected.hasSelected()) {
         return;
     }
 
-    auto tilemap = m_selectedEntity->getComponent<components::Tilemap>();
+    auto tilemap = m_selected.component();
 
     for (int i = 0; i < steps; i++) {
         auto transaction = m_transactions[m_transactions.size() - 1];
@@ -231,11 +197,11 @@ void TilemapTool::rollback(int steps) {
 }
 
 hg::graphics::components::Tilemap *TilemapTool::tilemap() {
-    if (!m_selectedEntity) {
+    if (!m_selected.hasSelected()) {
         return nullptr;
     }
 
-    return m_selectedEntity->getComponent<components::Tilemap>();
+    return m_selected.component();
 }
 
 void PointMode::left(TilemapTool *tool, hg::graphics::components::Tilemap *tilemap) {
@@ -380,4 +346,13 @@ void FillMode::leftPress(TilemapTool *tool, hg::graphics::components::Tilemap *t
         transaction.tiles.push_back(tile);
     }
     tool->processTransaction(transaction);
+}
+
+void ColorPickerMode::leftPress(TilemapTool *tool, hg::graphics::components::Tilemap *tilemap) {
+    if (tilemap->tiles.has(tool->m_mouseIndex)) {
+        auto tile = tilemap->tiles.get(tool->m_mouseIndex);
+        tool->m_type = tile.value.type;
+        tool->m_color = tile.value.color;
+        tool->m_texture = tile.value.texture;
+    }
 }

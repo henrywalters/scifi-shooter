@@ -27,6 +27,13 @@ void EditorRuntime::onInit() {
     addSystem<Props>()->load(MultiConfig::Parse(hg::ASSET_DIR + "props.hg"));
     addSystem<Player>(m_window, m_state.get());
 
+    for (const auto& file : d_listFiles(hg::ASSET_DIR + "particles")) {
+        auto parts = f_getParts(file);
+        hg::graphics::ParticleEmitterSettings settings;
+        settings.load(Config::Parse(f_readLines(file)));
+        m_state->particles.set(parts.name, settings);
+    }
+
     m_window->input.keyboardMouse.events.subscribe(hg::input::devices::KeyboardEvent::KeyPressed, [&](auto keyPress) {
         if (keyPress.key == '`') {
             m_console->toggle();

@@ -12,6 +12,7 @@
 #include "../components/startPoint.h"
 #include "../systems/audio.h"
 #include "../systems/player.h"
+#include "../levelEditor/tools/propTool.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -82,6 +83,7 @@ void LevelEditor::onInit() {
 
     m_tools.push_back(std::make_unique<TilemapTool>(m_runtime));
     m_tools.push_back(std::make_unique<ShaderTool>(m_runtime));
+    m_tools.push_back(std::make_unique<PropTool>(m_runtime));
 
     for (const auto& tool : m_tools) {
         tool->init();
@@ -397,7 +399,7 @@ void LevelEditor::renderSettingsWindow(double dt) {
 
     ImGui::Text(("Window: " + m_window->size().toString() + ", " + m_window->pos().toString()).c_str());
 
-    if (m_runtime->hasSystem<Player>() && m_runtime->getSystem<Player>()->player) {
+    if (m_playing) {
         ImGui::Text(("Player Position: " + m_runtime->getSystem<Player>()->player->position().toString()).c_str());
     }
 
@@ -442,9 +444,6 @@ void LevelEditor::pause() {
 
 void LevelEditor::reset(bool force) {
     if (m_playing || force) {
-        if (m_runtime->hasSystem<Player>()) {
-            m_runtime->getSystem<Player>()->despawn();
-        }
         if (m_runtime->hasSystem<AudioSystem>()) {
             m_runtime->getSystem<AudioSystem>()->stop();
         }

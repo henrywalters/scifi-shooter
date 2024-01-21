@@ -17,6 +17,7 @@ class Items : public WorldObjects<std::string, ItemDef, Item> {
 public:
 
     void load(hg::utils::MultiConfig config) override;
+    void save(hg::utils::MultiConfig& config) override;
 
 protected:
 

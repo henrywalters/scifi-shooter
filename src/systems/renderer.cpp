@@ -19,7 +19,10 @@
 #include "../components/item.h"
 #include "../components/light.h"
 #include "../components/startPoint.h"
+#include "../components/prop.h"
 #include "../scifiGame.h"
+#include "../components/connection.h"
+#include "../components/triggerConnection.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -71,19 +74,6 @@ void Renderer::onInit() {
     m_camera.size = GAME_SIZE.div(m_state->pixelsPerMeter).cast<float>();
     m_camera.centered = true;
 
-    /*
-    m_quad.size(hg::Vec2(1.0, 1.0));
-    m_quad.centered(true);
-    m_quadMesh.update(&m_quad);
-
-    m_quadBuffer = VertexBuffer<Quad>::Dynamic(0);
-    auto vao = m_quadMesh.getVAO();
-    vao->bind();
-    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 3, 2, offsetof(Quad, size));
-    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 4, 2, offsetof(Quad, offset));
-    vao->defineAttribute(m_quadBuffer.get(), DataType::Float, 5, 4, offsetof(Quad, color));
-    vao->setInstanced(3, 5);
-     */
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.create(RenderMode::Color, GAME_SIZE);
     m_renderPasses.create(RenderMode::Lighting, GAME_SIZE);
@@ -101,6 +91,7 @@ void Renderer::onInit() {
     m_enemies = TextBuffer(font, "0 Enemies Remaining", Vec3(GAME_SIZE[0] / 2, GAME_SIZE[1] - 75, 0), TextHAlignment::Center);
     m_weapon = TextBuffer(font, "Shotgun", Vec3(GAME_SIZE[0] - 200, 50), Vec3(200, 200, 0), TextHAlignment::Right);
     m_ammo = TextBuffer(font, "10 / 12", Vec3(GAME_SIZE[0] - 200, 75), Vec3(200, 200, 0),TextHAlignment::Right);
+    m_profiler = TextBuffer(font, "", Vec3(0, GAME_SIZE[1]), Vec3(GAME_SIZE[0], GAME_SIZE[1], 0), TextHAlignment::Left);
 }
 
 void Renderer::onBeforeUpdate() {
@@ -112,10 +103,11 @@ void Renderer::onBeforeUpdate() {
 
 void Renderer::onRender(double dt) {
 
+    Profiler::Start("Renderer::onRender");
+
     m_camera.zoom = m_state->zoom;
 
     m_window->color(Color::black());
-    // m_window->clear();
 
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
     m_renderPasses.clear(RenderMode::Color, Color::black());
@@ -143,13 +135,20 @@ void Renderer::onRender(double dt) {
 
     m_window->setVSync(m_state->params.vsync);
 
+    Profiler::Start("Renderer::colorPass");
     colorPass(dt);
+    Profiler::End("Renderer::colorPass");
+    Profiler::Start("Renderer::lightPass");
     lightPass(dt);
+    Profiler::End("Renderer::lightPass");
+    Profiler::Start("Renderer::debugPass");
     debugPass(dt);
-    uiPass(dt);
-    Profiler::Render();
+    Profiler::End("Renderer::debugPass");
+    Profiler::End("Renderer::onRender");
 
+    uiPass(dt);
     combinedPass(dt);
+
 }
 
 void Renderer::setCameraPosition(Vec3 pos) {
@@ -161,7 +160,7 @@ void Renderer::onAfterUpdate() {
 }
 
 void Renderer::onFixedUpdate(double dt) {
-    Profiler::Start();
+    Profiler::Start("Renderer::onFixedUpdate");
     scene->entities.forEach<ParticleEmitterComponent>([&](auto emitter, auto entity) {
         if (emitter->emitter()->finished()) {
             scene->entities.remove(entity);
@@ -170,7 +169,7 @@ void Renderer::onFixedUpdate(double dt) {
 
         emitter->update(dt);
     });
-    Profiler::End();
+    Profiler::End("Renderer::onFixedUpdate");
 }
 
 void Renderer::setLaserPointer(hg::Vec3 start, hg::Vec3 end) {
@@ -238,7 +237,6 @@ void Renderer::colorPass(double dt) {
     scene->entities.forEach<components::Tilemap>([&](auto tilemap, auto entity) {
         tilemap->tiles.forEach([&](hg::Vec2i index, components::Tile tile) {
             if (tile.type == components::TileType::Color) {
-                std::cout << Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()) << "\n";
                 m_batchRenderer.quads.batch(tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()));
             }
 
@@ -246,6 +244,18 @@ void Renderer::colorPass(double dt) {
                 m_batchRenderer.sprites.batch(tile.texture, tilemap->tileSize, tilemap->tileSize * 0.5, tile.color, Mat4::Translation((tilemap->getPos(tile.index)).template resize<3>() + entity->position()));
             }
         });
+    });
+
+    scene->entities.forEach<Prop>([&](Prop* prop, auto entity) {
+        if (prop->def) {
+            m_batchRenderer.sprites.batch(
+                    prop->def->states[prop->stateId].texture,
+                    prop->def->size,
+                    prop->def->size * 0.5,
+                    Color::white(),
+                    entity->model()
+            );
+        }
     });
 
     shader = getShader("batch_color");
@@ -272,9 +282,7 @@ void Renderer::colorPass(double dt) {
         auto animation = (hg::graphics::SpriteSheet*) animator->player->get();
         if (animation) {
             animation->texture()->bind();
-            std::cout << entity->model() << "\n\n";
             shader->setMat4("model", entity->model());
-            //m_animQuad.size(animation->size.cast<float>());
             auto rect = animation->getRect();
             m_animQuad.texSize(rect.size);
             m_animQuad.texOffset(rect.pos);
@@ -324,6 +332,7 @@ void Renderer::colorPass(double dt) {
 void Renderer::lightPass(double dt) {
 
     m_state->levelGeometry.clear();
+
     scene->entities.forEach<hg::graphics::components::Tilemap>([&](auto tilemap, auto entity) {
 
         if (!tilemap->collide) {
@@ -335,8 +344,6 @@ void Renderer::lightPass(double dt) {
         }
 
         auto geometry = tilemap->geometry();
-
-        //std::cout << "GEO SIZE = " << geometry.size() << "\n";
 
         m_state->levelGeometry.insert(m_state->levelGeometry.end(), geometry.begin(), geometry.end());
     });
@@ -354,7 +361,7 @@ void Renderer::lightPass(double dt) {
         shader->setVec2("origin", entity->position().resize<2>());
         shader->setVec4("color", light->color);
         shader->setFloat("attenuation", light->attenuation);
-
+        // shader->setMat4("model", Mat4::Scale(1.1));
         if (light->dynamic || light->mesh.size() == 0) {
             light->computeMesh(m_state->levelGeometry);
         }
@@ -368,6 +375,18 @@ void Renderer::lightPass(double dt) {
 }
 
 void Renderer::debugPass(double dt) {
+
+    scene->entities.forEach<TriggerConnection>([&](auto conn, auto entity) {
+        if (conn->connectedTo) {
+            Debug::DrawLine(math::LineSegment(entity->position(), conn->connectedTo->position()), Color::green(), 2.0 / 64.0);
+        }
+    });
+
+    scene->entities.forEach<TriggerConnection>([&](auto conn, auto entity) {
+        if (conn->connectedTo) {
+            Debug::DrawLine(math::LineSegment(entity->position(), conn->connectedTo->position()), Color::green(), 2.0 / 64.0);
+        }
+    });
 
     m_renderPasses.bind(RenderMode::Debug);
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
@@ -457,9 +476,6 @@ void Renderer::uiPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("color", Color::red());
 
-    //m_laserMesh->render();
-    //m_laserDiscMesh->render();
-
     for (int i = 0; i < 4; i++) {
         m_crossHairMeshes[i]->render();
     }
@@ -471,9 +487,28 @@ void Renderer::uiPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("textColor", Color::white());
 
+    std::string profilerText = "";
+
+    double total = 0;
+
+    for (const auto& [name, profile] : Profiler::Profiles()) {
+        profilerText += profile.name + ": " + std::to_string(profile.duration() * 1000) + "ms\n";
+        total += profile.duration() * 1000;
+    }
+
+    profilerText += "Total: " + std::to_string(total) + "ms";
+
+    auto messageSize = getFont("8bit")->calcMessageSize(profilerText);
+    m_profiler.pos(Vec3(0, messageSize[1], 0));
+
+    m_profiler.text(profilerText);
+
     m_wave.render();
     m_weapon.render();
     m_ammo.render();
+
+    shader->setVec4("textColor", Color::blue());
+    m_profiler.render();
     // m_enemies.render();
 
     processOverlays(RenderMode::UI);

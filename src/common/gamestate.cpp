@@ -57,16 +57,16 @@ bool GameState::canSee(const Vec2 &pos, hg::Entity *entity) {
     return canSee;
 }
 
-std::optional<hg::math::collisions::Hit> GameState::raycastGeometry(hg::math::Ray ray) {
-    float minT, t;
+std::optional<hg::math::collisions::Hit> GameState::raycastGeometry(hg::math::Ray ray, float& t) {
     bool hasMinT = false;
     std::optional<collisions::Hit> bestHit;
+    float tmpT;
 
     for (const auto& polygon : levelGeometry) {
-        auto hit = math::collisions::checkRayAgainstPolygon(ray, polygon, t);
+        auto hit = math::collisions::checkRayAgainstPolygon(ray, polygon, tmpT);
         if (hit.has_value()) {
-            if (!hasMinT || t < minT) {
-                minT = t;
+            if (!hasMinT || tmpT < t) {
+                t = tmpT;
                 hasMinT = true;
                 bestHit = hit;
             }

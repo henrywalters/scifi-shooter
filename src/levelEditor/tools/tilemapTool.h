@@ -11,6 +11,7 @@
 #include <hagame/graphics/components/quad.h>
 #include <hagame/graphics/components/tilemap.h>
 #include <hagame/utils/spatialMap.h>
+#include "selectedEntity.h"
 #include "tool.h"
 #include "../../common/constants.h"
 
@@ -60,6 +61,14 @@ public:
     void leftPress(TilemapTool* tool, hg::graphics::components::Tilemap* tilemap) override;
 };
 
+class ColorPickerMode : public TilingMode {
+public:
+
+    std::string getName() const override { return "Color Picker"; }
+
+    void leftPress(TilemapTool* tool, hg::graphics::components::Tilemap* tilemap) override;
+
+};
 
 class TilemapTool : public Tool {
 public:
@@ -68,8 +77,10 @@ public:
     friend class PointMode;
     friend class LineMode;
     friend class FillMode;
+    friend class ColorPickerMode;
 
     TilemapTool(hg::Scene* scene):
+        m_selected("Tilemap"),
         m_gridThickness(2.0),
         m_grid(hg::Vec2(0, 0), hg::Vec2i(0, 0), 0),
         m_mesh(&m_grid),
@@ -111,6 +122,8 @@ private:
         std::vector<hg::graphics::components::Tile> tiles;
     };
 
+    SelectedEntity<hg::graphics::components::Tilemap> m_selected;
+
     std::vector<Transaction> m_transactions;
 
     hg::graphics::primitives::Grid m_grid;
@@ -130,8 +143,6 @@ private:
     int m_mode = 0;
 
     hg::Vec2i m_mouseIndex;
-
-    hg::Entity* m_selectedEntity = nullptr;
 
     void processTransaction(Transaction transaction);
     void rollback(int steps = 1);
