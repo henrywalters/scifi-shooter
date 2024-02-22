@@ -33,7 +33,7 @@ protected:
                 stateIds.push_back(id);
             }
 
-            stateId = ui::Select<hg::utils::uuid_t>(
+            ui::Select<hg::utils::uuid_t>(
                 "Required for",
                 stateIds,
                 stateId,

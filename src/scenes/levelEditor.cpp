@@ -13,6 +13,7 @@
 #include "../systems/audio.h"
 #include "../systems/player.h"
 #include "../levelEditor/tools/propTool.h"
+#include "../levelEditor/tools/itemTool.h"
 
 using namespace hg;
 using namespace hg::utils;
@@ -84,6 +85,7 @@ void LevelEditor::onInit() {
     m_tools.push_back(std::make_unique<TilemapTool>(m_runtime));
     m_tools.push_back(std::make_unique<ShaderTool>(m_runtime));
     m_tools.push_back(std::make_unique<PropTool>(m_runtime));
+    m_tools.push_back(std::make_unique<ItemTool>(m_runtime));
 
     for (const auto& tool : m_tools) {
         tool->init();
@@ -393,6 +395,7 @@ void LevelEditor::renderSettingsWindow(double dt) {
     ImGui::SeparatorText("Settings");
     ImGui::Checkbox("Debug Render", &m_runtime->m_state->params.debugRender);
     ImGui::Checkbox("Render Lighting", &m_runtime->m_state->useLighting);
+    ImGui::Checkbox("Render Profile", &m_runtime->m_state->params.profileRender);
     ImGui::Checkbox("VSync", &m_runtime->m_state->params.vsync);
     ImGui::DragFloat3("Camera Pos", renderer->m_camera.transform.position.vector);
     ImGui::DragFloat("Camera Zoom", &m_runtime->state()->zoom, 0.0001, 3, 0.001);

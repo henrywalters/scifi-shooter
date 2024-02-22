@@ -1,38 +1,43 @@
 ~Props~
 
-[3499016236]
-states=2768434793,540094559
-540094559_collide=0
-540094559_texture=props/gate_open
-540094559_name=Open
-2768434793_message=The gate is closed. Perhaps it can be opened somehow.
-2768434793_collide=1
-2768434793_texture=props/gate_closed
-540094559_message=The gate is open. You may pass freely.
-2768434793_next=540094559
-2768434793_name=Closed
-default_state=2768434793
-size=1.000000,1.000000
-tag=Gate
-
-
 [236273642]
-877034805_message=The lever is not working. I need a tool to fix this.
-877034805_collide=0
-877034805_texture=props/lever_disabled
-size=1.000000,1.000000
-default_state=877034805
-4114273920_collide=0
-states=2263372411,4114273920,877034805
-2263372411_name=Off
-4114273920_name=On
+2263372411_collide=1
 2263372411_texture=props/lever_off
-2263372411_collide=0
-877034805_next=2263372411
-tag=Lever
-2263372411_next=4114273920
-4114273920_texture=props/lever_on
+states=877034805,4114273920,2263372411
+2263372411_name=Off
 2263372411_message=The lever needs to be turned on.
 4114273920_message=
+2263372411_triggerOnly=0
+size=1.000000,1.000000
+default_state=877034805
+4114273920_collide=1
 877034805_name=Disabled
+877034805_texture=props/lever_disabled
+4114273920_texture=props/lever_on
+877034805_collide=1
+877034805_triggerOnly=0
+4114273920_name=On
+877034805_message=The lever is not working. I need a tool to fix this.
+2263372411_next=4114273920
+tag=Lever
+877034805_next=2263372411
+4114273920_triggerOnly=0
+
+
+[3499016236]
+states=540094559,2768434793
+tag=Gate
+default_state=2768434793
+540094559_name=Open
+540094559_collide=0
+540094559_triggerOnly=1
+540094559_message=The gate is open. You may pass freely.
+2768434793_name=Closed
+2768434793_next=540094559
+2768434793_texture=props/gate_closed
+2768434793_collide=1
+size=1.000000,1.000000
+540094559_texture=props/gate_open
+2768434793_triggerOnly=1
+2768434793_message=The gate is closed. Perhaps it can be opened somehow.
 

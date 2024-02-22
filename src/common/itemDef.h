@@ -11,86 +11,137 @@
 #include <hagame/core/object.h>
 #include "worldObjectDef.h"
 
-enum class ItemType {
-    Weapon,
-    Ammo,
-    Health,
-    PropRequirement,
-};
+#include <hagame/utils/enum.h>
 
-const std::vector<std::string> ITEM_TYPE_NAMES = {
-    "Weapon",
-    "Ammo",
-    "Health",
-    "PropRequirement",
-};
+ENUM(ItemType)
+ENUM_VALUE(ItemType, Weapon)
+ENUM_VALUE(ItemType, Ammo)
+ENUM_VALUE(ItemType, Health)
+ENUM_VALUE(ItemType, Key)
 
 class ItemDef : public WorldObjectDef {
 public:
+    hg::utils::enum_t type;
     std::string tag;
-    ItemType type;
-    hg::Vec2 size;
-    std::string label;
     std::string description;
     std::string texture;
 
-    virtual void loadItem(hg::utils::Config config) = 0;
+    void load(hg::utils::Config config);
+    void save(hg::utils::Config& config);
+    void ui();
+
+    HG_GET(bool, dirty);
+
+protected:
+
+    bool m_dirty = false;
+
+    OBJECT_NAME(ItemDef)
+
+    virtual void loadItem(hg::utils::Config config) {}
+    virtual void saveItem(hg::utils::Config& config) {}
+    virtual void onUi() {}
+
 };
 
-enum class WeaponType {
-    Projectile,
-    Rocket,
-    Raycast,
-    Custom,
+struct ProjectileSettings {
+    std::string particles;
+    float speed;
 };
 
-const std::vector<std::string> WEAPON_TYPE_NAMES = {
-        "Projectile",
-        "Rocket",
-        "Raycast",
-        "Custom",
-};
-
-class PropRequirementDef : public ItemDef {
-public:
-
-    void loadItem(hg::utils::Config config);
-
+struct ExplosiveSettings {
+    float blastRadius = 0;
+    std::string sound;
+    std::string particles;
+    float minDamage = 0;
+    float maxDamage = 0;
 };
 
 class WeaponItemDef : public ItemDef {
 public:
 
-    WeaponType weaponType;
+    WeaponItemDef() {
+        this->type = ItemType::Weapon;
+    }
+
     hg::common::WeaponDef settings;
-    float damage;
-    float spread;
-    float speed;
-    float blastRadius;
-    std::string particles;
-    std::string explosionParticles;
+    bool startingWeapon = false;
+    bool projectile = false;
+    bool explosive = false;
+    float spread = 0;
+    int shotsPerFire = 1;
+
+    std::string hitParticles;
     std::string animations;
     std::string shootSound;
+    std::string hitSound;
 
-    void loadItem(hg::utils::Config config);
+    ProjectileSettings projectileSettings;
+    ExplosiveSettings explosiveSettings;
+
+protected:
+
+    OBJECT_NAME(WeaponItemDef)
+
+    void loadItem(hg::utils::Config config) override;
+    void saveItem(hg::utils::Config& config) override;
+    void onUi() override;
 };
 
 class AmmoItemDef : public ItemDef {
 public:
 
+    AmmoItemDef() {
+        this->type = ItemType::Ammo;
+    }
+
     std::string weapon;
     int count;
 
-    void loadItem(hg::utils::Config config);
+protected:
+
+    OBJECT_NAME(AmmoItemDef)
+
+    void loadItem(hg::utils::Config config) override;
+    void saveItem(hg::utils::Config& config) override;
 };
 
 class HealthItemDef : public ItemDef {
 public:
 
+    HealthItemDef() {
+        this->type = ItemType::Health;
+    }
+
     int restores;
 
-    void loadItem(hg::utils::Config config);
+protected:
+
+    OBJECT_NAME(HealthItemDef)
+
+    void loadItem(hg::utils::Config config) override;
+    void saveItem(hg::utils::Config& config) override;
+
+    void onUi() override;
+};
+
+class KeyItemDef : public ItemDef {
+public:
+
+    KeyItemDef() {
+        this->type = ItemType::Key;
+    }
+
+protected:
+
+    OBJECT_NAME(KeyItemDef)
 
 };
+
+ENUM_FACTORY(ItemType)
+FACTORY_VALUE(ItemType, Weapon, ItemDef, WeaponItemDef)
+FACTORY_VALUE(ItemType, Ammo, ItemDef, AmmoItemDef)
+FACTORY_VALUE(ItemType, Health, ItemDef, HealthItemDef)
+FACTORY_VALUE(ItemType, Key, ItemDef, KeyItemDef)
 
 #endif //SCIFISHOOTER_ITEMDEF_H

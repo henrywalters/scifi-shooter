@@ -6,44 +6,33 @@
 #include "items.h"
 
 void Items::load(hg::utils::MultiConfig config) {
-    for (int i = 0; i < ITEM_TYPE_NAMES.size(); i++) {
 
-        auto page = config.getPage(ITEM_TYPE_NAMES[i]);
+    auto page = config.getPage("items");
 
-        for (const auto& name : page->sections()) {
-            std::shared_ptr<ItemDef> item;
+    for (const auto& id : page->sections()) {
+        std::shared_ptr<ItemDef> item;
+        auto type = page->get<int>(id, "type");
 
-            switch ((ItemType) i) {
-                case ItemType::Weapon:
-                    item = std::make_shared<WeaponItemDef>();
-                    break;
-                case ItemType::Ammo:
-                    item = std::make_shared<AmmoItemDef>();
-                    break;
-                case ItemType::Health:
-                    item = std::make_shared<HealthItemDef>();
-                    break;
-                case ItemType::PropRequirement:
-                    item = std::make_shared<PropRequirementDef>();
-                    break;
-                default:
-                    throw std::runtime_error("Unsupported item type in load function: " + ITEM_TYPE_NAMES[i]);
-            }
+        item = GET_FACTORY(ItemType, ItemDef)->at(type)();
 
-            item->type = (ItemType) i;
-            item->tag = name;
-            page->getArray<float, 2>(name, "size", item->size.vector);
-            item->description = page->getRaw(name, "description");
-            item->texture = page->getRaw(name, "texture");
-            item->loadItem(*page);
+        item->setId(std::stol(id));
+        item->load(*page);
 
-            if (m_store.has(name)) {
-                throw std::runtime_error("Item already exists with this name: " + name);
-            }
-
-            m_store.set(name, item);
+        if (m_store.has(item->id())) {
+            throw std::runtime_error("Item already exists with this id: " + id);
         }
+
+        m_store.set(item->id(), item);
     }
+
+}
+
+void Items::save(hg::utils::MultiConfig &config) {
+    auto page = config.getPage("items");
+
+    m_store.forEach([&](hg::utils::uuid_t id, std::shared_ptr<ItemDef> item) {
+        item->save(*page);
+    });
 }
 
 void Items::onSpawn(hg::Entity *entity) {
@@ -52,10 +41,6 @@ void Items::onSpawn(hg::Entity *entity) {
     sprite->size = item->def->size.cast<float>();
     sprite->texture = item->def->texture;
     entity->name = item->def->tag;
-}
-
-void Items::save(hg::utils::MultiConfig &config) {
-
 }
 
 

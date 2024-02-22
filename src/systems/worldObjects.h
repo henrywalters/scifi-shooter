@@ -26,7 +26,8 @@ public:
     // Get all objects with the radius of some position
     std::vector<hg::Entity*> getWithinRadius(hg::Vec2 pos, float radius) {
         std::vector<hg::Entity*> items;
-        for (const auto& entity : m_map.getNeighbors(pos, hg::Vec2(radius * 2, radius * 2))) {
+        auto neighbors = m_map.getNeighbors(pos, hg::Vec2(radius * 2, radius * 2));
+        for (const auto& entity : neighbors) {
             if ((entity->transform.position.resize<2>() - pos).magnitude() <= radius) {
                 items.push_back(entity);
             }

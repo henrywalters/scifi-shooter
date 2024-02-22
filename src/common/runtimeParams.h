@@ -9,6 +9,7 @@ struct RuntimeParameters {
     bool vsync = false;
     bool invincible = true;
     bool debugRender = false;
+    bool profileRender = false;
     bool ignorePlayer = false;
 };
 

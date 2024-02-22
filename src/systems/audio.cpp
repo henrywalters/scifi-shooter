@@ -62,9 +62,9 @@ void AudioSystem::onUpdate(double dt) {
         }
     });
 
-    if (initialized == sources && !m_played) {
-        play();
-    }
+    //if (initialized == sources && !m_played) {
+    //    play();
+    //}
 
     Profiler::End("Audio::onUpdate");
 }

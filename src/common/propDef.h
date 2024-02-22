@@ -18,12 +18,17 @@ public:
         std::string name;
         std::string texture;
         bool collide;
+        bool triggerOnly;
         std::string message;
         std::optional<hg::utils::uuid_t> nextStateId = std::nullopt;
     };
 
     hg::utils::uuid_t defaultStateId;
     std::unordered_map<hg::utils::uuid_t, State> states;
+
+protected:
+
+    OBJECT_NAME(PropDef);
 
 };
 

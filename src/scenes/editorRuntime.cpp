@@ -75,7 +75,45 @@ void EditorRuntime::onFixedUpdate(double dt) {
 }
 
 void EditorRuntime::onUpdate(double dt) {
+    /*
+    math::LineSegment line(Vec3(-10, -10, 0), Vec3(10, 10, 0));
+    Circle circle(getSystem<Renderer>()->getMousePos(), 1);
+    Rect rect(getSystem<Renderer>()->getMousePos(), Vec2(2, 2));
 
+    auto displayHit = [](std::optional<math::collisions::Hit> hit) {
+        if (hit.has_value()) {
+            graphics::Debug::DrawLine(hit.value().position.resize<2>(),
+                                      (hit.value().position + hit.value().normal * hit.value().depth).resize<2>(),
+                                      graphics::Color::red(), 2. / 64.);
+        }
+    };
+
+    auto hit = math::collisions::checkCircleAgainstLine(circle, line);
+
+    graphics::Debug::DrawCircle(circle.center.x(), circle.center.y(), circle.radius,
+                                hit.has_value() ? graphics::Color::red() : graphics::Color::blue(), 2. / 64.0);
+
+    graphics::Debug::DrawRect(rect, graphics::Color::blue(), 2. / 64.);
+
+    graphics::Debug::DrawLine(line.a.resize<2>(), line.b.resize<2>(), graphics::Color::green(), 2. / 64.0);
+    displayHit(hit);
+
+    Circle circleTest(Vec2(0, 0), 2);
+
+    Rect rectTest(Vec2(0, 5), Vec2(3, 5));
+
+    graphics::Debug::DrawCircle(circleTest.center.x(), circleTest.center.y(), circleTest.radius,graphics::Color::blue(), 2. / 64.0);
+    graphics::Debug::DrawRect(rectTest, graphics::Color::blue(), 2. / 64. );
+
+    hit = math::collisions::checkCircleAgainstCircle(circle, circleTest);
+    displayHit(hit);
+
+    hit = math::collisions::checkCircleAgainstRect(circle, rectTest);
+    displayHit(hit);
+
+    hit = math::collisions::checkRectAgainstRect(rect, rectTest);
+    displayHit(hit);
+    */
 }
 
 void EditorRuntime::onActivate() {

@@ -23,6 +23,9 @@
 #include "../scifiGame.h"
 #include "../components/connection.h"
 #include "../components/triggerConnection.h"
+#include "../common/weapons.h"
+#include "../components/requirementConnection.h"
+#include "../components/endPoint.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -44,7 +47,7 @@ Renderer::Renderer(Window* window, GameState* state, bool editorMode):
     m_lightMesh(&m_light),
     //m_quadMesh(&m_quad),
     m_lightTexture((AspectRatio{(float)GAME_SIZE[0], (float)GAME_SIZE[1]}).getViewport(Vec2(100.0, 100.0)).size.cast<int>()),
-    m_startQuad(Vec2(0.25, 0.25)),
+    m_startQuad(Vec2(1, 1)),
     m_startMesh(&m_startQuad),
     m_animQuad(Vec2(1, 1)),
     m_anim(&m_animQuad)
@@ -211,12 +214,15 @@ void Renderer::colorPass(double dt) {
     glViewport(0, 0, GAME_SIZE[0], GAME_SIZE[1]);
 
     int pIndex = 0;
-    for (const auto& poly : m_state->levelGeometry) {
+    for (const auto& poly : m_state->levelRectangles) {
         Color color = m_state->randomColorsLUT[pIndex++ % m_state->randomColorsLUT.size()];
-        for (const auto& edge : poly) {
-            Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2.0 / 64.0);
-        }
+        //for (const auto& edge : poly) {
+        //    Debug::DrawLine(edge.a[0], edge.a[1], edge.b[0], edge.b[1], color, 2.0 / 64.0);
+        //}
+        Debug::DrawRect(poly, color, 2. / 64.);
     }
+
+
 
     auto shader = getShader(TEXTURE_SHADER.name);
     shader->use();
@@ -252,6 +258,18 @@ void Renderer::colorPass(double dt) {
                     prop->def->states[prop->stateId].texture,
                     prop->def->size,
                     prop->def->size * 0.5,
+                    Color::white(),
+                    entity->model()
+            );
+        }
+    });
+
+    scene->entities.forEach<Item>([&](Item* item, auto entity) {
+        if (item->def) {
+            m_batchRenderer.sprites.batch(
+                    item->def->texture,
+                    item->def->size,
+                    item->def->size * 0.5,
                     Color::white(),
                     entity->model()
             );
@@ -332,6 +350,7 @@ void Renderer::colorPass(double dt) {
 void Renderer::lightPass(double dt) {
 
     m_state->levelGeometry.clear();
+    m_state->levelRectangles.clear();
 
     scene->entities.forEach<hg::graphics::components::Tilemap>([&](auto tilemap, auto entity) {
 
@@ -344,8 +363,10 @@ void Renderer::lightPass(double dt) {
         }
 
         auto geometry = tilemap->geometry();
+        auto rectangles = tilemap->rectangles();
 
         m_state->levelGeometry.insert(m_state->levelGeometry.end(), geometry.begin(), geometry.end());
+        m_state->levelRectangles.insert(m_state->levelRectangles.end(), rectangles.begin(), rectangles.end());
     });
 
     m_renderPasses.bind(RenderMode::Lighting);
@@ -382,9 +403,9 @@ void Renderer::debugPass(double dt) {
         }
     });
 
-    scene->entities.forEach<TriggerConnection>([&](auto conn, auto entity) {
+    scene->entities.forEach<RequirementConnection>([&](auto conn, auto entity) {
         if (conn->connectedTo) {
-            Debug::DrawLine(math::LineSegment(entity->position(), conn->connectedTo->position()), Color::green(), 2.0 / 64.0);
+            Debug::DrawLine(math::LineSegment(entity->position(), conn->connectedTo->position()), Color::blue(), 2.0 / 64.0);
         }
     });
 
@@ -414,11 +435,17 @@ void Renderer::debugPass(double dt) {
         m_startMesh.render();
     });
 
-    getTexture("ui/audio")->bind();
-    scene->entities.forEach<hg::audio::AudioSource>([&](auto source, hg::Entity* entity) {
+    getTexture("ui/end")->bind();
+    scene->entities.forEach<EndPoint>([&](auto start, auto entity) {
         shader->setMat4("model", entity->model());
         m_startMesh.render();
     });
+
+    getTexture("ui/audio")->bind();
+    //scene->entities.forEach<hg::audio::AudioSource>([&](auto source, hg::Entity* entity) {
+    //    shader->setMat4("model", entity->model());
+    //    m_startMesh.render();
+    //});
 
     processOverlays(RenderMode::Debug);
 
@@ -440,11 +467,11 @@ void Renderer::uiPass(double dt) {
         if (player) { // TODO: get rid of this digusting if chain
             auto actor = player->getComponent<Actor>();
             if (actor) {
-                auto weapon = actor->weapons.getWeapon();
+                auto weapon = (GameWeapon*) actor->weapons.getWeapon();
 
                 if (weapon) {
-                    if (m_weapon.text() != weapon->settings.name) {
-                        m_weapon.text(weapon->settings.name);
+                    if (m_weapon.text() != weapon->item->tag) {
+                        m_weapon.text(weapon->item->tag);
                     }
 
                     std::string ammoText = weapon->settings.infinite ? "Inf" : std::to_string(weapon->ammoInClip()) + " / " +
@@ -487,29 +514,31 @@ void Renderer::uiPass(double dt) {
     shader->setMat4("model", Mat4::Identity());
     shader->setVec4("textColor", Color::white());
 
-    std::string profilerText = "";
-
-    double total = 0;
-
-    for (const auto& [name, profile] : Profiler::Profiles()) {
-        profilerText += profile.name + ": " + std::to_string(profile.duration() * 1000) + "ms\n";
-        total += profile.duration() * 1000;
-    }
-
-    profilerText += "Total: " + std::to_string(total) + "ms";
-
-    auto messageSize = getFont("8bit")->calcMessageSize(profilerText);
-    m_profiler.pos(Vec3(0, messageSize[1], 0));
-
-    m_profiler.text(profilerText);
-
     m_wave.render();
     m_weapon.render();
     m_ammo.render();
 
     shader->setVec4("textColor", Color::blue());
-    m_profiler.render();
-    // m_enemies.render();
+
+    if (m_state->params.profileRender) {
+        std::string profilerText = "";
+
+        double total = 0;
+
+        for (const auto& [name, profile] : Profiler::Profiles()) {
+            profilerText += profile.name + ": " + std::to_string(profile.duration() * 1000) + "ms\n";
+            total += profile.duration() * 1000;
+        }
+
+        profilerText += "Total: " + std::to_string(total) + "ms";
+
+        auto messageSize = getFont("8bit")->calcMessageSize(profilerText);
+        m_profiler.pos(Vec3(0, messageSize[1], 0));
+
+        m_profiler.text(profilerText);
+
+        m_profiler.render();
+    }
 
     processOverlays(RenderMode::UI);
 

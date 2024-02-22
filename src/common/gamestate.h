@@ -29,6 +29,7 @@ struct GameState {
     hg::EntityMap2D entityMap;
     bool useLighting = true;
     std::vector<hg::math::Polygon> levelGeometry;
+    std::vector<hg::Rect> levelRectangles;
     hg::utils::Store<std::string, hg::graphics::ParticleEmitterSettings> particles;
     std::vector<hg::graphics::Color> randomColorsLUT;
 

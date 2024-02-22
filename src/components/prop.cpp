@@ -9,45 +9,45 @@
 using namespace hg;
 using namespace hg::utils;
 
-void Prop::toggle(hg::Entity* inventory) {
+void Prop::toggle(hg::Entity* inventory, bool fromPlayer) {
+
+    if (!def->states[stateId].nextStateId.has_value()) {
+        return;
+    }
+
+    if (def->states[def->states[stateId].nextStateId.value()].triggerOnly && fromPlayer) {
+        std::cout << "TRIGGER ONLY!";
+        return;
+    }
 
     bool meetsRequirements = true;
 
-    std::vector<std::string> items;
+    std::vector<hg::Entity*> items;
 
     for (const auto& entity : inventory->children()) {
         auto item = ((hg::Entity*) entity)->getComponent<Item>();
         if (item) {
-            items.push_back(item->def->tag);
+            items.push_back((hg::Entity*) entity);
         }
     }
 
-    entity->scene->entities.forEach<TriggerConnection>([&](TriggerConnection* connection, auto other) {
+    entity->scene->entities.forEach<RequirementConnection>([&](RequirementConnection* connection, auto other) {
         if (connection->connectedTo && connection->connectedTo == entity) {
-            std::cout << "Satisfied by " << other->name << "\n";
-        }
-    });
-
-    for (const auto& requirement : requirements) {
-        if (def->states[stateId].nextStateId.has_value()) {
             meetsRequirements = false;
-            for (const auto& [id, other] : def->states) {
-                if (id == def->states[stateId].nextStateId.value()) {
+            for (const auto& item : items) {
+                if (item->id() == other->id()) {
                     meetsRequirements = true;
-                    break;
                 }
             }
         }
-    }
+    });
 
     if (!meetsRequirements) {
         std::cout << "DOESNT MEET REQUIREMENTS\n";
         return;
     }
 
-    if (def->states[stateId].nextStateId.has_value()) {
-        stateId = def->states[stateId].nextStateId.value();
-    }
+    stateId = def->states[stateId].nextStateId.value();
 
     auto connection = entity->getComponent<TriggerConnection>();
     if (
@@ -56,7 +56,7 @@ void Prop::toggle(hg::Entity* inventory) {
         connection->connectedTo->hasComponent<Prop>()
     )
     {
-        connection->connectedTo->getComponent<Prop>()->toggle(inventory);
+        connection->connectedTo->getComponent<Prop>()->toggle(inventory, false);
     }
 }
 
@@ -84,7 +84,7 @@ void Prop::load(Config* config, std::string section) {
 
 void Prop::save(Config* config, std::string section) {
     if (def) {
-        config->set(section, "prop_id", def->id);
+        config->set(section, "prop_id", def->id());
     }
 }
 
@@ -96,7 +96,7 @@ void Prop::onUiUpdate() {
             def = nullptr;
         }
         entity->scene->getSystem<Props>()->store().forEach([&](auto id, auto prop) {
-            if (ImGui::Selectable(prop->tag.c_str(), def && def->id == prop->id)) {
+            if (ImGui::Selectable(prop->tag.c_str(), def && def->id() == prop->id())) {
                 def = prop;
             }
         });

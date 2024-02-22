@@ -13,50 +13,38 @@
 #include "../systems/player.h"
 #include "../systems/audio.h"
 
-void ProjectileWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
-    hg::utils::Random rand;
-    auto projectileEntity = runtime->entities.add();
-    projectileEntity->transform.position = pos;
-    auto projectile = projectileEntity->addComponent<Projectile>();
-    projectile->direction = dir;
-    projectile->speed = speed;
-    projectile->damage = rand.real<float>(settings.minDamage, settings.maxDamage);
-    projectile->source = source;
-    projectileEntity->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get(particles));
-    // emitter->update(2.0);
+void GameWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
+    if (item->projectile) {
+        shootProjectile(pos, dir);
+    } else {
+        shootRaycast(pos, dir);
+    }
 }
 
-void RocketWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
-    hg::utils::Random rand;
-    auto projectileEntity = runtime->entities.add();
-    projectileEntity->transform.position = pos;
+void GameWeapon::shootProjectile(hg::Vec3 pos, hg::Vec3 dir) {
+    for (int i = 0; i < item->shotsPerFire; i++) {
+        hg::utils::Random rand;
+        auto projectileEntity = runtime->entities.add();
+        projectileEntity->transform.position = pos;
+        auto projectile = projectileEntity->addComponent<Projectile>();
+        projectile->direction = applySpread(dir);
+        projectile->speed = item->projectileSettings.speed;
+        projectile->damage = rand.real<float>(settings.minDamage, settings.maxDamage);
+        projectile->source = source;
+        projectileEntity->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get(item->projectileSettings.particles));
 
-    auto projectile = projectileEntity->addComponent<Projectile>();
-    projectile->direction = dir;
-    projectile->speed = speed;
-    projectile->damage = rand.real<float>(settings.minDamage, settings.maxDamage);
-    projectile->source = source;
-    projectileEntity->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get(particles));
-
-
-    auto explosion = projectileEntity->addComponent<Explosive>();
-    explosion->blastRadius = blastRadius;
-    explosion->particles = explosionParticles;
-    explosion->damage = explosionDamage;
+        if (item->explosive) {
+            addExplosive(runtime->entities.add());
+        }
+    }
 }
 
-void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
-    hg::utils::Random rand;
-
+void GameWeapon::shootRaycast(hg::Vec3 pos, hg::Vec3 dir) {
     auto aPlayer = source->getComponentInChildren<hg::graphics::components::SpriteSheetAnimator>()->player;
-    aPlayer->triggerImmediately("player/" + this->settings.name + "/shoot");
-
     runtime->getSystem<AudioSystem>()->play(source);
 
-    for (int i = 0; i < m_shotsPerCast; i++) {
-        float spread = rand.real<float>(-m_spread, m_spread);
-        auto newDir = hg::Quat(spread, hg::Vec3(0, 0, 1)).rotatePoint(dir) * 10000;
-        hg::math::Ray ray(pos, newDir);
+    for (int i = 0; i < item->shotsPerFire; i++) {
+        hg::math::Ray ray(pos, applySpread(dir));
 
         float t;
         float minT;
@@ -90,8 +78,14 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
             hitDisplay->transform.position[2] = 5;
             hitQuad->size = hg::Vec2(4.0 / 64.0, 4.0 / 64.0);
             hitQuad->color = hg::graphics::Color::blue();
-            //auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get("wall_hit"));
-            //emitter->emitter()->fire();
+            if (runtime->state()->particles.has(item->hitParticles)) {
+                auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(
+                        runtime->state()->particles.get(item->hitParticles));
+                emitter->emitter()->fire();
+            } else {
+                std::cout << "Missing Hit Particles: " << item->hitParticles << "\n";
+            }
+            addExplosive(runtime->entities.add())->explode(runtime, runtime->state());
             continue;
         } else if (hasMinT) {
             auto hitDisplay = runtime->entities.add();
@@ -99,18 +93,28 @@ void RaycastWeapon::onFire(hg::Vec3 pos, hg::Vec3 dir) {
 
             auto hitActor = hitEntity->getComponent<Actor>();
 
-            float damage = -rand.real<float>(settings.minDamage, settings.maxDamage);
+            float damage = -runtime->state()->random.real<float>(settings.minDamage, settings.maxDamage);
 
             hitActor->addHealth(damage);
             hitEntity->getComponent<hg::HealthBar>()->health = hitActor->health;
 
-            // hitNeighborEntity->getComponent<TopDownPlayerController>()->addVelocity(projectile->direction * 2000);
-
-            auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get("blood_hit"));
+            auto emitter = hitDisplay->addComponent<hg::graphics::ParticleEmitterComponent>(runtime->state()->particles.get(item->hitParticles));
             emitter->emitter()->fire();
+            addExplosive(runtime->entities.add())->explode(runtime, runtime->state());
             continue;
         }
-
-
     }
+}
+
+Explosive* GameWeapon::addExplosive(hg::Entity* entity) {
+    auto explosion = entity->addComponent<Explosive>();
+    explosion->blastRadius = item->explosiveSettings.blastRadius;
+    explosion->particles = item->explosiveSettings.particles;
+    explosion->damage = runtime->state()->random.real<float>(item->explosiveSettings.minDamage, item->explosiveSettings.maxDamage);
+    return explosion;
+}
+
+hg::Vec3 GameWeapon::applySpread(hg::Vec3 dir) const {
+    float angle = runtime->random()->real<float>(-item->spread, item->spread);
+    return hg::Quat(angle, hg::Vec3(0, 0, 1)).rotatePoint(dir) * 10000;
 }

@@ -13,7 +13,7 @@
 #include "worldObjects.h"
 #include "../components/item.h"
 
-class Items : public WorldObjects<std::string, ItemDef, Item> {
+class Items : public WorldObjects<hg::utils::uuid_t, ItemDef, Item> {
 public:
 
     void load(hg::utils::MultiConfig config) override;

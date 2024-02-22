@@ -21,7 +21,7 @@ void Props::load(MultiConfig config) {
     for (const auto& id : page->sections()) {
         std::shared_ptr<PropDef> prop = std::make_unique<PropDef>();
 
-        prop->id = std::stol(id);
+        prop->setId(std::stol(id));
         prop->tag = page->getRaw(id, "tag");
         page->getArray<float, 2>(id, "size", prop->size.vector);
         std::vector<std::string> states = s_split(page->getRaw(id, "states"),',');
@@ -37,6 +37,7 @@ void Props::load(MultiConfig config) {
             state.texture = page->getRaw(id, stateId + "_texture");
             state.message = page->getRaw(id, stateId + "_message");
             state.collide = page->get<bool>(id, stateId + "_collide");
+            state.triggerOnly = page->get<bool>(id, stateId + "_triggerOnly");
             state.name = page->getRaw(id, stateId + "_name");
             if (page->has(id, stateId + "_next")) {
                 state.nextStateId = page->get<hg::utils::uuid_t>(id, stateId + "_next");
@@ -44,11 +45,11 @@ void Props::load(MultiConfig config) {
             prop->states.insert(std::make_pair(state.id, state));
         }
 
-        if (m_store.has(prop->id)) {
+        if (m_store.has(prop->id())) {
             throw std::runtime_error("Prop already exists with this id: " + id);
         }
 
-        m_store.set(prop->id, prop);
+        m_store.set(prop->id(), prop);
     }
 }
 
@@ -69,6 +70,7 @@ void Props::save(MultiConfig &config) {
             page->setRaw(idStr, stateId + "_name", state.name);
             page->setRaw(idStr, stateId + "_texture", state.texture);
             page->set(idStr, stateId + "_collide", state.collide);
+            page->set(idStr, stateId + "_triggerOnly", state.triggerOnly);
             page->setRaw(idStr, stateId + "_message", state.message);
             if (state.nextStateId.has_value()) {
                 page->set(idStr, stateId + "_next", state.nextStateId.value());

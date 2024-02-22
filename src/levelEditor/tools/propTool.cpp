@@ -15,7 +15,6 @@ void PropTool::onInit() {
                 m_selectedProp = *m_selected.component()->def;
             } else {
                 m_selectedProp = PropDef{};
-                m_selectedProp.id = hg::utils::UUID::Generate();
             }
             open();
         } else {
@@ -42,10 +41,9 @@ void PropTool::renderUI(double dt) {
     if (ImGui::BeginCombo("Prop Type", preview.c_str())) {
         if (ImGui::Selectable("-- New Prop --")) {
             m_selectedProp = PropDef{};
-            m_selectedProp.id = hg::utils::UUID::Generate();
         }
         for (const auto& prop : m_props) {
-            const bool isSelected = m_selectedProp.id == prop->id;
+            const bool isSelected = m_selectedProp.id() == prop->id();
             if (ImGui::Selectable(prop->tag.c_str(), isSelected)) {
                 m_selectedProp = *prop;
             }
@@ -75,6 +73,7 @@ void PropTool::renderUI(double dt) {
         DIRTY(ImGui::InputText("Name", &state.name));
         DIRTY(ImGui::InputText("Texture", &state.texture));
         DIRTY(ImGui::Checkbox("Collide", &state.collide));
+        DIRTY(ImGui::Checkbox("Trigger Only", &state.triggerOnly));
         DIRTY(ImGui::InputText("Message", &state.message));
         auto preview = state.nextStateId.has_value() ? getState(state.nextStateId.value()).name : "";
         if (ImGui::BeginCombo("Next State", preview.c_str())) {
@@ -96,7 +95,7 @@ void PropTool::renderUI(double dt) {
 
     if (m_error.has_value()) {
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-        ImGui::Text(m_error.value().c_str());
+        ImGui::Text("%s",m_error.value().c_str());
         ImGui::PopStyleColor();
     }
 
@@ -116,7 +115,7 @@ void PropTool::renderUI(double dt) {
 
             bool newProp = true;
             for (const auto& prop : m_props) {
-                if (prop->id == m_selectedProp.id) {
+                if (prop->id() == m_selectedProp.id()) {
                     prop->tag = m_selectedProp.tag;
                     prop->size = m_selectedProp.size;
                     prop->states = m_selectedProp.states;
@@ -134,7 +133,7 @@ void PropTool::renderUI(double dt) {
                 }
 
                 for (const auto& prop : m_props) {
-                    m_scene->getSystem<Props>()->store().set(prop->id, prop);
+                    m_scene->getSystem<Props>()->store().set(prop->id(), prop);
                 }
 
                 hg::utils::MultiConfig config;

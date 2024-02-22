@@ -7,66 +7,20 @@
 
 #include <hagame/common/weapons.h>
 #include <hagame/core/entity.h>
+#include "../common/itemDef.h"
 #include "../scenes/editorRuntime.h"
+#include "../components/explosive.h"
 
-class Runtime;
-
-// This file contains a set of base weapons, each of which can be customized using a WeaponDefinition
-
-class ProjectileWeapon : public hg::common::Weapon {
-public:
-
-    std::string particles;
-    hg::Entity* source;
-    EditorRuntime* runtime;
-    float speed = 1000.0f;
-
-    ProjectileWeapon(hg::common::WeaponDef def):
-        hg::common::Weapon(def)
-    {}
-
-protected:
-
-    void onFire(hg::Vec3 pos, hg::Vec3 dir) override;
-
-};
-
-class RocketWeapon : public hg::common::Weapon {
-public:
-    std::string particles;
-    std::string explosionParticles;
-    hg::Entity* source;
-    Runtime* runtime;
-    float speed = 1000.0f;
-    float explosionDamage = 100.0f;
-    float blastRadius = 2000.0f;
-
-    RocketWeapon(hg::common::WeaponDef def):
-        hg::common::Weapon(def)
-    {}
-
-protected:
-    void onFire(hg::Vec3 pos, hg::Vec3 dir) override;
-};
-
-class RaycastWeapon : public hg::common::Weapon {
+class GameWeapon : public hg::common::Weapon {
 public:
 
     hg::Entity* source;
     EditorRuntime* runtime;
+    WeaponItemDef* item;
 
-    hg::Vec2 computeSpread() override {
-        return hg::Vec2(m_spread, 0);
-    }
-
-    /*
-     * shotsPerCast - number of raycasts sent per cast
-     * spread - the direction will be rotated by +/- spread
-     */
-    RaycastWeapon(hg::common::WeaponDef def, int shotsPerCast, float spread):
+    GameWeapon(hg::common::WeaponDef def, WeaponItemDef* itemDef):
         hg::common::Weapon(def),
-        m_shotsPerCast(shotsPerCast),
-        m_spread(spread)
+        item(itemDef)
     {}
 
 protected:
@@ -75,9 +29,12 @@ protected:
 
 private:
 
-    int m_shotsPerCast;
-    float m_spread;
+    void shootProjectile(hg::Vec3 pos, hg::Vec3 dir);
+    void shootRaycast(hg::Vec3 pos, hg::Vec3 dir);
 
+    Explosive* addExplosive(hg::Entity* entity);
+
+    hg::Vec3 applySpread(hg::Vec3 dir) const;
 };
 
 #endif //SCIFISHOOTER_WEAPONS_H

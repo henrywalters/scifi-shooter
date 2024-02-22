@@ -37,7 +37,9 @@ Player::Player(hg::graphics::Window *window, GameState* state):
 void Player::spawn(hg::Vec2 pos) {
     player = AddActor(scene, Vec3::Zero(), "player", Vec2(1, 1), 3);
     player->transform.position = pos.resize<3>();
-    player->addComponent<LightComponent>();
+    auto light = player->addComponent<LightComponent>();
+    light->color = Color(0.5f, 0.5f, 0.5f);
+    light->attenuation = 0.5;
     //auto rect = player->addComponent<hg::math::components::RectCollider>();
     //rect->pos = Vec2(-0.5, -0.5);
     //rect->size = Vec2(1, 1);
@@ -47,35 +49,32 @@ void Player::spawn(hg::Vec2 pos) {
     player->name = "Player";
     // player->getComponent<Actor>()->weapons.selectWeapon(2);
     scene->getSystem<Renderer>()->setCameraPosition(player->transform.position);
-    auto weapon = scene->getSystem<Items>()->get("handgun");
-    pickUpWeapon((WeaponItemDef*) weapon, 36);
+    // auto weapon = scene->getSystem<Items>()->get("handgun");
+    // pickUpWeapon((WeaponItemDef*) weapon, 36);
 
     auto audio = scene->getSystem<AudioSystem>();
-    auto audioSource = player->addComponent<hg::audio::AudioSource>();
-    audioSource->channel = (int )AudioChannel::Sfx;
-    audioSource->streamName = ((WeaponItemDef*)weapon)->shootSound;
 
     player->getComponent<Actor>()->onDeath = [&]() {
         spawn(Vec2::Zero());
     };
+
+    auto items = scene->getSystem<Items>();
+    items->store().forEach([&](auto index, auto item) {
+        if (item->type == ItemType::Weapon && ((WeaponItemDef*) item.get())->startingWeapon) {
+            pickUpWeapon((WeaponItemDef*) item.get(), 12);
+            auto audioSource = player->addComponent<hg::audio::AudioSource>();
+            audioSource->channel = (int )AudioChannel::Sfx;
+            audioSource->streamName = ((WeaponItemDef*)item.get())->shootSound;
+        }
+    });
 }
 
 void Player::pickUpWeapon(WeaponItemDef* weapon, int ammo) {
     auto actor = player->getComponent<Actor>();
-    if (weapon->weaponType == WeaponType::Raycast) {
-        auto added = actor->weapons.add<RaycastWeapon>(weapon->settings, weapon->settings.shotsPerSecond, weapon->spread * math::DEG2RAD);
-        added->runtime = (EditorRuntime*) scene;
-        added->source = player;
-        added->addAmmo(ammo);
-    } else if (weapon->weaponType == WeaponType::Projectile) {
-        auto added = actor->weapons.add<ProjectileWeapon>(weapon->settings);
-        added->runtime = (EditorRuntime*) scene;
-        added->source = player;
-        added->addAmmo(ammo);
-    } else {
-        throw std::runtime_error("UNSUPPORTED WEAPON TYPE: " + weapon->settings.name);
-    }
-
+    auto added = actor->weapons.add<GameWeapon>(weapon->settings, weapon);
+    added->runtime = (EditorRuntime*) scene;
+    added->source = player;
+    added->addAmmo(ammo);
     auto aPlayer = player->getComponentInChildren<components::SpriteSheetAnimator>()->player;
 
     std::vector<std::string> animationNames = {
@@ -119,8 +118,9 @@ void Player::onUpdate(double dt) {
         return;
     }
 
-    auto weapon = player->getComponent<Actor>()->weapons.getWeapon();
-    auto weaponName = weapon->settings.name;
+    auto weapon = (GameWeapon*) player->getComponent<Actor>()->weapons.getWeapon();
+    std::string weaponName = weapon->item->tag;
+    std::string animationName = weapon->item->animations;
 
     auto aPlayer = player->getComponentInChildren<components::SpriteSheetAnimator>()->player;
 
@@ -134,7 +134,6 @@ void Player::onUpdate(double dt) {
     m_state->raycast(laserRay, laserHit, {player});
 
     renderer->setLaserPointer(laserRay.origin, laserHit.resize<3>());
-
     renderer->setCrossHair(m_mousePos, 10, 15);
 
     auto actor = player->getComponent<Actor>();
@@ -145,12 +144,14 @@ void Player::onUpdate(double dt) {
         }
     }
 
-    if (m_window->input.keyboardMouse.keyboard.letters[KeyboardMouse::LetterIndex('R')]) {
-        if (actor->weapons.getWeapon()->reload()) {
-            aPlayer->triggerImmediately("player/" + weaponName + "/reload");
+    if (weapon) {
+        if (m_window->input.keyboardMouse.keyboard.letters[KeyboardMouse::LetterIndex('R')]) {
+            if (actor->weapons.getWeapon()->reload()) {
+                aPlayer->triggerImmediately(animationName + "/reload");
+            }
+        } else if (player->getComponent<TopDownPlayerController>()->velocity().magnitudeSq() > 0) {
+            aPlayer->trigger(animationName + "/move");
         }
-    } else if (player->getComponent<TopDownPlayerController>()->velocity().magnitudeSq() > 0) {
-        aPlayer->trigger("player/" + weaponName + "/move");
     }
 
     Props* props = scene->getSystem<Props>();

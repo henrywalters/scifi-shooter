@@ -1,57 +1,72 @@
-~Weapon~
+~items~
 
-[shotgun]
-size=128, 64
-description=A powerful gun that shoots multiple projectiles at once
-texture=items/12guage
-animations=player/shotgun
-weaponType=Raycast
-damage=10
-spread=30
-
-[handgun]
-size=128, 64
-description=A reliable handgun that gets the job done
-texture=items/12guage
-shootSound=glock
-animations=player/handgun
-weaponType=Raycast
-damage=30
-spread=5
-
-[rifle]
-size=128, 64
-description=A wepaon sure to mow down the enemy
-texture=items/12guage
-shootSound=glock
-animations=player/rifle
-weaponType=Raycast
-minDamage=5
-maxDamage=15
-spread=45
-automatic=1
-clipSize=30
-maxAmmo=240
-shotsPerSecond=8
-
-~Ammo~
-
-[12 Guage Ammo]
-size=32,32
-description=Shells for the 12 Guage
-texture=items/12gauge_bullets
-weapon=12 Guage
-count=8
-
-~Health~
-[Small Health]
-size=48, 48
-description=Revive a small bit of health
-texture=items/health
-restores=15
-
-~PropRequirement~
-[Wrench]
-size=64,64
-description=This tool might be useful to repair things that aren't working
+[1417281150]
 texture=items/wrench
+description=This can be used to fixed things that aren't working
+size=1.000000,1.000000
+tag=Wrench
+type=3
+
+
+[3617740568]
+maxDamage=15.000000
+maxAmmo=128
+shotsPerSecond=1
+chambered=1
+minDamage=25.000000
+shotsPerFire=1
+type=0
+clipSize=12
+automatic=0
+projectile=0
+tag=Handgun
+size=0.000000,0.000000
+description=A reliable weapon at short to medium range
+texture=items/glock
+infinite=0
+hitSound=glock
+explosive=0
+shootSound=glock
+limitAmmo=1
+spread=1.000000
+hitParticles=
+projectile.speed=73969441584412826770939458879488.000000
+startingWeapon=1
+animations=player/handgun
+
+
+[2794962346]
+restores=100
+texture=items/health
+description=Restores a large amount of health
+size=0.000000,0.000000
+tag=Med Kit
+type=2
+
+
+[295453438]
+maxDamage=5.000000
+maxAmmo=36
+shotsPerSecond=1
+chambered=0
+minDamage=5.000000
+shotsPerFire=12
+type=0
+clipSize=6
+automatic=0
+projectile=0
+tag=12 Guage
+size=0.000000,0.000000
+description=A powerful short-range weapon
+texture=items/12guage
+infinite=0
+hitSound=
+explosive=0
+shootSound=audio/glock.wav
+limitAmmo=1
+spread=5.000000
+hitParticles=particles/wall_hit.hgp
+projectile.speed=0.000000
+startingWeapon=0
+animations=textures/player/shotgun
+

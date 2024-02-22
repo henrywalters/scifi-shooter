@@ -8,6 +8,8 @@
 #include <hagame/graphics/debug.h>
 #include "actors.h"
 #include "../components/actor.h"
+#include "props.h"
+#include "../components/endPoint.h"
 
 using namespace hg;
 using namespace hg::graphics;
@@ -54,34 +56,34 @@ void Actors::onFixedUpdate(double dt) {
         if (vel.magnitude() > 0) {
             if (entity->hasComponent<math::components::CircleCollider>()) {
                 auto collider = entity->getComponent<math::components::CircleCollider>();
-                for (int i = 0; i < 3; i++) {
-                    Vec3 dirVel;
+                auto circle = collider->getCircle();
+                // circle.radius += vel.magnitude() * dt;
 
-                    switch (i) {
-                        case 0:
-                            dirVel[0] = vel[0];
-                            break;
-                        case 1:
-                            dirVel[1] = vel[1];
-                            break;
-                        case 2:
-                            dirVel[0] = vel[0];
-                            dirVel[1] = vel[1];
-                            break;
-                    }
-
-                    if (dirVel.magnitude() == 0) {
-                        continue;
-                    }
-                    auto origin = entity->position() + dirVel.normalized() * collider->radius;
-                    auto ray = hg::math::Ray(origin, dirVel * dt);
-                    float t;
-                    auto hit = m_state->raycastGeometry(ray, t);
-                    if (hit.has_value() && t < 1.0f) {
-                        std::cout << "HIT WALL\n";
-                        vel += hit.value().normal.prod(dirVel.abs()) * (1 - t);
+                for (const auto& rect : m_state->levelRectangles) {
+                    auto hit = math::collisions::checkCircleAgainstRect(circle, rect);
+                    if (hit.has_value()) {
+                        entity->transform.move(hit->normal * hit->depth * -1);
                     }
                 }
+
+                for (const auto& propEntity : scene->getSystem<Props>()->getWithinRadius(entity->position().resize<2>(), 5)) {
+                    auto prop = propEntity->getComponent<Prop>();
+                    if (prop->def->states[prop->stateId].collide) {
+                        auto rect = propEntity->getComponent<math::components::RectCollider>()->getRect();
+                        auto hit = math::collisions::checkCircleAgainstRect(circle, rect);
+                        if (hit.has_value()) {
+                            entity->transform.move(hit->normal * hit->depth * -1);
+                        }
+                    }
+                }
+
+                scene->entities.forEach<EndPoint>([&](auto end, auto entity) {
+                    auto rect = Rect(entity->position().template resize<2>() - Vec2(0.5), Vec2(1.0));
+                    auto hit = math::collisions::checkCircleAgainstRect(circle, rect);
+                    if (hit.has_value()) {
+                        std::cout << "LEVEL END\n";
+                    }
+                });
             }
         }
 

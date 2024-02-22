@@ -1,0 +1,59 @@
+~Weapon~
+
+[shotgun]
+size=128, 64
+tag=Shotgun
+description=A powerful gun that shoots multiple projectiles at once
+texture=items/12guage
+animations=player/shotgun
+weaponType=Raycast
+damage=10
+spread=30
+
+[handgun]
+tag=Handgun
+size=128, 64
+description=A reliable handgun that gets the job done
+texture=items/12guage
+shootSound=glock
+animations=player/handgun
+weaponType=Raycast
+damage=30
+spread=5
+
+[rifle]
+size=128, 64
+description=A wepaon sure to mow down the enemy
+texture=items/12guage
+shootSound=glock
+animations=player/rifle
+weaponType=Raycast
+minDamage=5
+maxDamage=15
+spread=45
+automatic=1
+clipSize=30
+maxAmmo=240
+shotsPerSecond=8
+
+~Ammo~
+
+[12 Guage Ammo]
+size=32,32
+description=Shells for the 12 Guage
+texture=items/12gauge_bullets
+weapon=12 Guage
+count=8
+
+~Health~
+[Small Health]
+size=48, 48
+description=Revive a small bit of health
+texture=items/health
+restores=15
+
+~PropRequirement~
+[Wrench]
+size=64,64
+description=This tool might be useful to repair things that aren't working
+texture=items/wrench

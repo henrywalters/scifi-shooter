@@ -24,7 +24,7 @@ public:
     hg::utils::uuid_t stateId;
     std::vector<Requirement> requirements;
 
-    void toggle(hg::Entity* inventory);
+    void toggle(hg::Entity* inventory, bool fromPlayer = true);
 
     void addRequirement(std::string state, std::string item);
 
